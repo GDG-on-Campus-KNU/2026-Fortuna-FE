@@ -24,9 +24,9 @@ export async function resolvePlaybackSource(
  * 정희균(플레이어)의 useAudioStore.init(track) 에 그대로 넣을 수 있는
  * AudioTrack 객체를 만들어 준다.
  *
- * shape 는 2026-Fortuna-FE-feat-5/src/features/audio/store/useAudioStore.ts 의
- * AudioTrack 과 100% 동일하게 유지한다. merge 시점에 player 쪽 로컬 타입을
- * 지우고 이 타입을 import 하도록 정리할 예정.
+ * shape 는 player 브랜치의 useAudioStore 가 받는 AudioTrack 과 100% 동일하게
+ * 유지한다. merge 시점에 player 쪽 로컬 타입 정의를 제거하고 이 타입을
+ * import 하도록 정리할 예정.
  */
 export type AudioTrack = {
   id: string;
