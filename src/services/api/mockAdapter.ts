@@ -49,10 +49,22 @@ export function installMockAdapter(): void {
     try {
       const params = JSON.parse(config.data || '{}');
       const newId = `c_demo_${Date.now()}`;
-      
-      const formatLabel = params.format === 'dialog' ? '대화형' : params.format === 'quiz' ? '퀴즈형' : '스토리형';
-      const voiceLabel = params.ttsVoice === 'professor' ? '교수' : params.ttsVoice === 'friend' ? '친구' : params.ttsVoice === 'coach' ? '도전(화난)' : '속삭임';
-      
+
+      const formatLabel =
+        params.format === 'dialog'
+          ? '대화형'
+          : params.format === 'quiz'
+            ? '퀴즈형'
+            : '스토리형';
+      const voiceLabel =
+        params.ttsVoice === 'professor'
+          ? '교수'
+          : params.ttsVoice === 'friend'
+            ? '친구'
+            : params.ttsVoice === 'coach'
+              ? '도전(화난)'
+              : '속삭임';
+
       mockContents.unshift({
         id: newId,
         userId: 'u_demo',
@@ -94,6 +106,34 @@ export function installMockAdapter(): void {
       },
     ];
   });
+
+  // ── Auth (dev) ───────────────────────────────────────────
+  // BE 없이도 로그인 플로우를 시연하기 위한 가짜 인증.
+  // 라우트 가드가 켜진 뒤에도 dev에서 앱(탭/홈/생성/재생기)에 진입할 수 있게 한다.
+  // 어떤 이메일/비밀번호로도 로그인되며, 응답은 snake_case로 내려 인터셉터 변환을 거친다.
+  const demoUser = (email: string) => ({
+    id: 'u_demo',
+    email,
+    is_active: true,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  });
+
+  mock.onPost('/api/v1/auth/login').reply(200, {
+    access_token: 'dev-mock-access-token',
+    token_type: 'bearer',
+  });
+
+  mock.onPost('/api/v1/auth/signup').reply((config) => {
+    try {
+      const body = JSON.parse(config.data || '{}');
+      return [201, demoUser(body.email ?? 'demo@studycast.app')];
+    } catch {
+      return [201, demoUser('demo@studycast.app')];
+    }
+  });
+
+  mock.onGet('/api/v1/auth/me').reply(200, demoUser('demo@studycast.app'));
 
   // eslint-disable-next-line no-console
   console.log('[mockAdapter] installed — all axios requests are intercepted');
