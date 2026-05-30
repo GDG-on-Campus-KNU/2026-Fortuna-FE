@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { IconSymbol } from '@/src/shared/ui/icon-symbol';
 import { useColorScheme } from '@/src/shared/hooks/use-color-scheme';
 import { HapticTab } from '@/src/components/haptic-tab';
 import { Colors } from '@/src/shared/constants/theme';
@@ -20,22 +19,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: '홈',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={26} name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="create"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: '팟캐스트 생성',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={26} name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="audio-demo"
+        name="player"
         options={{
-          title: 'Audio',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="play" color={color} />,
+          title: '재생기',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons size={26} name={focused ? 'play-circle' : 'play-circle-outline'} color={color} />
+          ),
         }}
       />
     </Tabs>

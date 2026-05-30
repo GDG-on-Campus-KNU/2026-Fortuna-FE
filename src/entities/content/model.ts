@@ -6,7 +6,7 @@ export type ContentStatus = 'pending' | 'generating' | 'done' | 'failed';
 
 export type AudioFormat = 'dialog' | 'quiz' | 'story';
 
-export type TtsVoice = 'friend' | 'professor' | 'coach';
+export type TtsVoice = 'friend' | 'professor' | 'coach' | 'whisper';
 
 export type DurationMin = 5 | 10 | 20 | 30;
 

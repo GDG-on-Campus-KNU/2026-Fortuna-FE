@@ -33,7 +33,9 @@ export function installMockAdapter(): void {
     created_at: c.createdAt,
   });
 
-  mock.onGet('/contents').reply(200, mockContents.map(toSnakeContent));
+  mock.onGet('/contents').reply(() => {
+    return [200, mockContents.map(toSnakeContent)];
+  });
 
   mock.onGet(/\/contents\/.+/).reply((config) => {
     const id = config.url?.split('/').pop();
@@ -43,9 +45,31 @@ export function installMockAdapter(): void {
 
   mock.onDelete(/\/contents\/.+/).reply(204);
 
-  mock.onPost('/generate').reply(202, {
-    job_id: 'job_demo_001',
-    content_id: 'c_demo_new',
+  mock.onPost('/generate').reply((config) => {
+    try {
+      const params = JSON.parse(config.data || '{}');
+      const newId = `c_demo_${Date.now()}`;
+      
+      const formatLabel = params.format === 'dialog' ? '대화형' : params.format === 'quiz' ? '퀴즈형' : '스토리형';
+      const voiceLabel = params.ttsVoice === 'professor' ? '교수' : params.ttsVoice === 'friend' ? '친구' : params.ttsVoice === 'coach' ? '도전(화난)' : '속삭임';
+      
+      mockContents.unshift({
+        id: newId,
+        userId: 'u_demo',
+        title: `프로세스 vs 스레드: ${formatLabel} 요약 (${voiceLabel})`,
+        duration: params.duration || 10,
+        format: params.format || 'dialog',
+        ttsVoice: params.ttsVoice || 'friend',
+        script: 'AI가 요약 핵심 분석서를 로드하고 오디오를 조립 중입니다...',
+        audioUrl: null,
+        status: 'generating',
+        createdAt: new Date().toISOString(),
+      });
+
+      return [202, { job_id: `job_${newId}`, content_id: newId }];
+    } catch {
+      return [202, { job_id: 'job_demo_001', content_id: 'c_demo_new' }];
+    }
   });
 
   // 폴링 데모: 처음 3회는 generating, 이후 done.

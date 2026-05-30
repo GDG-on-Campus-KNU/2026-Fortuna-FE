@@ -1,11 +1,35 @@
-import { createMMKV } from 'react-native-mmkv';
 import type { Content } from '@/src/entities/content/model';
 import type { UserPreferences } from '@/src/entities/preferences/model';
 import type { OfflineEntry } from '@/src/entities/offline/model';
 
-// 앱 전역에서 사용하는 단일 MMKV 인스턴스. id로 네임스페이스 분리.
-// mmkv v4는 Nitro Modules 기반이라 `new MMKV()` 대신 `createMMKV()`를 쓴다.
-export const storage = createMMKV({ id: 'studycast' });
+// mmkv v4는 Nitro Modules 기반의 네이티브 모듈입니다.
+// Expo Go 또는 네이티브 모듈 빌드가 안 된 환경(웹 등)에서 앱 크래시가 나지 않도록 메모리 기반 딜백을 설계합니다.
+export let storage: {
+  getString: (key: string) => string | undefined;
+  set: (key: string, value: string | boolean | number) => void;
+  clearAll: () => void;
+};
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createMMKV } = require('react-native-mmkv');
+  storage = createMMKV({ id: 'studycast' });
+  // 동작 여부 자체 검증 (에러 유발 테스트)
+  storage.getString('__test_nitro__');
+} catch {
+  const memoryStore = new Map<string, string>();
+  storage = {
+    getString: (key: string) => memoryStore.get(key),
+    set: (key: string, value: string | boolean | number) => {
+      memoryStore.set(key, String(value));
+    },
+    clearAll: () => {
+      memoryStore.clear();
+    },
+  };
+  // eslint-disable-next-line no-console
+  console.warn('[Storage] Native NitroModules/MMKV not found. Switched to secure in-memory store.');
+}
 
 const KEY = {
   contents: 'cache:contents',
