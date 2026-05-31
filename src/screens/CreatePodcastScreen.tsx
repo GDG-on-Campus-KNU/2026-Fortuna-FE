@@ -1,313 +1,591 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-import type { AudioFormat, DurationMin, TtsVoice } from '@/src/entities/content/model';
+import type {
+  AudioFormat,
+  DurationMin,
+  TtsVoice,
+} from '@/src/entities/content/model';
 import { contentRepository } from '@/src/entities/content/repository';
 import { Fonts } from '@/src/shared/constants/theme';
 
+const RECOMMENDATIONS = [
+  '알고리즘 기말고사 대비',
+  '그래프와 트리의 차이',
+  'BFS 개념 복습',
+];
+
 export default function CreatePodcastScreen() {
-  // 폼 상태들
-  const [selectedFile, setSelectedFile] = useState<{ name: string; size: string } | null>(null);
-  const [duration, setDuration] = useState<DurationMin>(10);
+  // Wizard flow step: 1 | 2 | 3 | 4 | 5
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+
+  // Form states
+  const [topic, setTopic] = useState('');
   const [format, setFormat] = useState<AudioFormat>('dialog');
   const [voice, setVoice] = useState<TtsVoice>('friend');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duration, setDuration] = useState<DurationMin>(10);
 
-  // 모의 파일 선택 함수
-  const handleSelectFile = () => {
-    setSelectedFile({
-      name: '컴퓨터_구조_기말고사_핵심요약.pdf',
-      size: '2.4 MB',
+  // Step 5 loading states
+  const [loadingStage, setLoadingStage] = useState<1 | 2 | 3 | 4>(1);
+
+  // Animations
+  const stepFadeAnim = useRef(new Animated.Value(1)).current;
+  const timersRef = useRef<any[]>([]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+    };
+  }, []);
+
+  // Smoothly transition between wizard steps using opacity animations
+  const transitionToStep = (nextStep: 1 | 2 | 3 | 4 | 5) => {
+    Animated.timing(stepFadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setStep(nextStep);
+      Animated.timing(stepFadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
     });
   };
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
+  // Handle back button presses
+  const handleBack = () => {
+    if (step > 1) {
+      transitionToStep((step - 1) as any);
+    } else {
+      router.back();
+    }
   };
 
-  // 생성하기 호출
+  // Triggers podcast creation flow
   const handleCreate = async () => {
-    if (!selectedFile) {
-      Alert.alert('알림', '학습 자료를 업로드해 주세요.');
+    if (!topic.trim()) {
+      Alert.alert('알림', '주제를 입력해 주세요.');
       return;
     }
 
-    setIsSubmitting(true);
+    transitionToStep(5);
+    setLoadingStage(1);
+
+    // Simulate progress updates
+    const t1 = setTimeout(() => setLoadingStage(2), 1800);
+    const t2 = setTimeout(() => setLoadingStage(3), 3600);
+    const t3 = setTimeout(() => setLoadingStage(4), 5400);
+
+    const virtualFile = {
+      name: `${topic.trim()}.pdf`,
+      size: '1.2 MB',
+    };
 
     try {
       // 1. 실제로 contentRepository.generate를 호출하여 'generating' 상태의 임시 카드를 MMKV에 캐시 저장합니다.
       await contentRepository.generate(
         {
-          materialId: 'mat_demo_001',
+          materialId: `mat_demo_${Date.now()}`,
           duration,
           format,
           ttsVoice: voice,
         },
         {
           userId: 'u_demo',
-          title: selectedFile.name.replace(/\.[^/.]+$/, "") + ` (AI ${duration}분 요약)`,
+          title: topic.trim() + ` (AI ${duration}분 요약)`,
           duration,
           format,
           ttsVoice: voice,
-          script: `${selectedFile.name} 분석 중... 팟캐스트 콘텐츠를 생성하고 있습니다. 잠시만 기다려주세요.`,
-        }
+          script: `${virtualFile.name} 분석 중... 팟캐스트 콘텐츠를 생성하고 있습니다. 잠시만 기다려주세요.`,
+        },
       );
 
-      setIsSubmitting(false);
-      Alert.alert(
-        '생성 시작!',
-        'AI 맞춤 팟캐스트가 생성 중입니다. 홈 보관함에서 확인해보세요!',
-        [
-          {
-            text: '확인',
-            onPress: () => {
-              router.push('/(tabs)');
+      // 전체 시뮬레이션이 끝나는 시점에 Alert를 띄우고 홈으로 보냅니다.
+      const t4 = setTimeout(() => {
+        Alert.alert(
+          '생성 성공!',
+          'AI 맞춤형 학습 팟캐스트 생성이 정상적으로 요청되었습니다. 홈 화면에서 확인해 보세요!',
+          [
+            {
+              text: '확인',
+              onPress: () => {
+                router.replace('/(tabs)');
+              },
             },
-          },
-        ]
-      );
+          ],
+        );
+      }, 6500) as any;
+
+      timersRef.current = [t1, t2, t3, t4];
     } catch (err) {
-      setIsSubmitting(false);
+      // Clear timers and reset
+      timersRef.current.forEach(clearTimeout);
       Alert.alert('오류', '팟캐스트 생성 요청에 실패했습니다.');
-      // eslint-disable-next-line no-console
       console.error('[CreatePodcastScreen] handleCreate error:', err);
+      setStep(4);
     }
   };
 
-  // 포맷 목록 데이터
-  const formatOptions: { id: AudioFormat; title: string; desc: string; icon: any; color: string }[] = [
-    {
-      id: 'dialog',
-      title: '대화형 (Dialog)',
-      desc: '두 명의 튜터가 친근하게 대화하며 질문과 답변으로 공부 내용을 핵심 요약합니다.',
-      icon: 'people-outline',
-      color: '#3B82F6',
-    },
-    {
-      id: 'quiz',
-      title: '퀴즈형 (Quiz)',
-      desc: '배운 이론을 바탕으로 퀴즈를 출제하고 해설을 들려주어 실전 대비를 돕습니다.',
-      icon: 'help-circle-outline',
-      color: '#10B981',
-    },
-    {
-      id: 'story',
-      title: '스토리형 (Story)',
-      desc: '복잡한 개념도 귀에 쏙쏙 박히는 흥미진진한 이야기 형태로 풀어나가 설명합니다.',
-      icon: 'book-outline',
-      color: '#8B5CF6',
-    },
-  ];
+  // Helper component to render progress checklist in Step 5
+  const renderProgressItem = (
+    itemStep: 1 | 2 | 3,
+    title: string,
+    activeText: string,
+    waitingText: string,
+  ) => {
+    const isComplete = loadingStage > itemStep;
+    const isActive = loadingStage === itemStep;
 
-  // 음성 목록 데이터
-  const voiceOptions: { id: TtsVoice; title: string; desc: string; emoji: string; badge: string; voiceColor: string }[] = [
-    {
-      id: 'professor',
-      title: '교수',
-      desc: '차분하고 또렷한 목소리로 논리적이고 친절하게 핵심을 짚어줍니다.',
-      emoji: '👨‍🏫',
-      badge: '지적인 설명',
-      voiceColor: '#0EA5E9',
-    },
-    {
-      id: 'friend',
-      title: '친구',
-      desc: '친구처럼 편안하게 대화하듯 반말로 핵심 개념을 설명해 줍니다.',
-      emoji: '🧑‍🤝‍🧑',
-      badge: '친근한 반말',
-      voiceColor: '#F59E0B',
-    },
-    {
-      id: 'coach',
-      title: '도전(화난)',
-      desc: '에너제틱하고 불타오르는 어조로 잠들지 않게 집중 타이트닝을 유도합니다.',
-      emoji: '🔥',
-      badge: '열정 스파르타',
-      voiceColor: '#EF4444',
-    },
-    {
-      id: 'whisper',
-      title: '속삭임',
-      desc: 'ASMR처럼 귀가에 조용히 속삭여 극도의 집중과 심리 안정을 제공합니다.',
-      emoji: '🤫',
-      badge: '차분한 속삭임',
-      voiceColor: '#8B5CF6',
-    },
-  ];
+    let circleBoxStyle: any[] = [styles.circleIcon, styles.circleIconWaiting];
+    let circleTextStyle: any[] = [styles.circleTextWaiting];
+    let titleStyle: any[] = [styles.checklistTitleWaiting];
+    let statusStyle: any[] = [styles.checklistStatusWaiting];
+    let statusText = waitingText;
+
+    if (isComplete) {
+      circleBoxStyle = [styles.circleIcon, styles.circleIconComplete];
+      circleTextStyle = [styles.circleTextComplete];
+      titleStyle = [styles.checklistTitle];
+      statusStyle = [styles.checklistStatusComplete];
+      statusText = '완료';
+    } else if (isActive) {
+      circleBoxStyle = [styles.circleIcon, styles.circleIconActive];
+      circleTextStyle = [styles.circleTextActive];
+      titleStyle = [styles.checklistTitle];
+      statusStyle = [styles.checklistStatusActive];
+      statusText = activeText;
+    }
+
+    return (
+      <View style={styles.checklistItemContainer} key={itemStep}>
+        <View style={styles.checklistItem}>
+          <View style={circleBoxStyle}>
+            {isComplete ? (
+              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+            ) : (
+              <Text style={circleTextStyle}>{itemStep}</Text>
+            )}
+          </View>
+          <View style={styles.checklistTextContainer}>
+            <Text style={titleStyle}>{title}</Text>
+            <Text style={statusStyle}>{statusText}</Text>
+          </View>
+        </View>
+        {itemStep < 3 && (
+          <View
+            style={[
+              styles.verticalLine,
+              isComplete && styles.verticalLineComplete,
+            ]}
+          />
+        )}
+      </View>
+    );
+  };
+
+  // Helper to calculate circular progress bar styling based on current stage
+  const getProgressStyles = () => {
+    switch (loadingStage) {
+      case 1:
+        return {
+          borderTopColor: '#1E6AF4',
+          borderRightColor: 'rgba(30, 106, 244, 0.08)',
+          borderBottomColor: 'rgba(30, 106, 244, 0.08)',
+          borderLeftColor: 'rgba(30, 106, 244, 0.08)',
+          percentage: '25%',
+        };
+      case 2:
+        return {
+          borderTopColor: '#1E6AF4',
+          borderRightColor: '#1E6AF4',
+          borderBottomColor: 'rgba(30, 106, 244, 0.08)',
+          borderLeftColor: 'rgba(30, 106, 244, 0.08)',
+          percentage: '50%',
+        };
+      case 3:
+        return {
+          borderTopColor: '#1E6AF4',
+          borderRightColor: '#1E6AF4',
+          borderBottomColor: '#1E6AF4',
+          borderLeftColor: 'rgba(30, 106, 244, 0.08)',
+          percentage: '75%',
+        };
+      case 4:
+      default:
+        return {
+          borderColor: '#1E6AF4',
+          percentage: '100%',
+        };
+    }
+  };
+
+  const prog = getProgressStyles();
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>팟캐스트 생성</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* 1. 학습 자료 업로드 섹션 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. 학습 자료 업로드</Text>
-          <Text style={styles.sectionSubtitle}>팟캐스트의 기반이 될 학습 요약본, 논문, PDF 등을 업로드하세요.</Text>
-
-          {!selectedFile ? (
+      {step < 5 ? (
+        <>
+          {/* Header Bar */}
+          <View style={styles.headerBar}>
             <Pressable
-              onPress={handleSelectFile}
-              style={({ pressed }) => [styles.uploadZone, pressed && styles.uploadZonePressed]}
+              onPress={handleBack}
+              style={({ pressed }) => [
+                styles.backButton,
+                pressed && styles.actionPressed,
+              ]}
             >
-              <View style={styles.uploadIconContainer}>
-                <Ionicons name="cloud-upload-outline" size={32} color="#3B82F6" />
-              </View>
-              <Text style={styles.uploadMainText}>자료 선택하여 업로드하기</Text>
-              <Text style={styles.uploadSubText}>PDF, TXT, 이미지 (최대 20MB)</Text>
+              <Ionicons name="chevron-back" size={24} color="#100C08" />
             </Pressable>
-          ) : (
-            <View style={styles.fileCard}>
-              <View style={styles.fileIconContainer}>
-                <Ionicons name="document-text" size={28} color="#EF4444" />
-              </View>
-              <View style={styles.fileInfo}>
-                <Text style={styles.fileName} numberOfLines={1}>
-                  {selectedFile.name}
-                </Text>
-                <Text style={styles.fileSize}>{selectedFile.size}</Text>
-              </View>
+
+            <View style={styles.progressContainer}>
+              {([1, 2, 3, 4] as const).map((s) => {
+                const isActive = step === s;
+                return (
+                  <View
+                    key={s}
+                    style={[
+                      styles.progressDot,
+                      isActive && styles.progressDotActive,
+                    ]}
+                  />
+                );
+              })}
+            </View>
+
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <Animated.View style={{ opacity: stepFadeAnim, flex: 1 }}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Step 1: Topic Input */}
+              {step === 1 && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.titleText}>무슨 내용의</Text>
+                    <Text style={styles.titleText}>팟캐스트를 만들까요?</Text>
+                    <Text style={styles.subtitleText}>
+                      아래에서 선택하거나 직접 입력해요
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      topic.trim().length > 0 && styles.inputWrapperFilled,
+                    ]}
+                  >
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="주제를 입력해 주세요"
+                      placeholderTextColor="#94A3B8"
+                      value={topic}
+                      onChangeText={setTopic}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    {topic.trim().length > 0 && (
+                      <Pressable
+                        onPress={() => setTopic('')}
+                        style={styles.clearButton}
+                      >
+                        <Ionicons
+                          name="close-circle"
+                          size={18}
+                          color="#94A3B8"
+                        />
+                      </Pressable>
+                    )}
+                  </View>
+
+                  <View style={styles.recommendSection}>
+                    <Text style={styles.recommendTitle}>추천 내용</Text>
+                    {RECOMMENDATIONS.map((rec) => {
+                      const isSelected = topic.trim() === rec;
+                      return (
+                        <Pressable
+                          key={rec}
+                          onPress={() => setTopic(rec)}
+                          style={({ pressed }) => [
+                            styles.recommendChip,
+                            isSelected && styles.recommendChipSelected,
+                            pressed && styles.actionPressed,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.recommendChipText,
+                              isSelected && styles.recommendChipTextSelected,
+                            ]}
+                          >
+                            {rec}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Step 2: Format Selection */}
+              {step === 2 && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.titleText}>어떤 구성의</Text>
+                    <Text style={styles.titleText}>팟캐스트를 만들까요?</Text>
+                    <Text style={styles.subtitleText}>학습 방식을 골라요</Text>
+                  </View>
+
+                  <View style={styles.optionsList}>
+                    {(
+                      [
+                        {
+                          id: 'dialog',
+                          title: '대화형',
+                          desc: '대화하며 질문과 답변으로 공부 내용을 핵심 요약해요.',
+                        },
+                        {
+                          id: 'quiz',
+                          title: '퀴즈형',
+                          desc: '배운 이론을 바탕으로 퀴즈를 출제하고 해설을 들려줘요.',
+                        },
+                        {
+                          id: 'story',
+                          title: '스토리형',
+                          desc: '복잡한 개념도 귀에 쏙쏙 박히는 흥미진진한 이야기로 들려줘요.',
+                        },
+                      ] as const
+                    ).map((opt) => {
+                      const isSelected = format === opt.id;
+                      return (
+                        <Pressable
+                          key={opt.id}
+                          onPress={() => setFormat(opt.id)}
+                          style={({ pressed }) => [
+                            styles.card,
+                            isSelected && styles.cardSelected,
+                            pressed && styles.actionPressed,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.cardTitle,
+                              isSelected && styles.cardTitleSelected,
+                            ]}
+                          >
+                            {opt.title}
+                          </Text>
+                          <Text style={styles.cardDesc}>{opt.desc}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Step 3: Voice Selection */}
+              {step === 3 && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.titleText}>어떤 스타일의</Text>
+                    <Text style={styles.titleText}>팟캐스트를 만들까요?</Text>
+                    <Text style={styles.subtitleText}>강의 성격을 골라요</Text>
+                  </View>
+
+                  <View style={styles.optionsList}>
+                    {(
+                      [
+                        {
+                          id: 'professor',
+                          title: '교수',
+                          desc: '차분하고 또렷한 목소리',
+                        },
+                        {
+                          id: 'friend',
+                          title: '친구',
+                          desc: '친구처럼 편안하게 대화하듯',
+                        },
+                        {
+                          id: 'coach',
+                          title: '스파르타',
+                          desc: '에너제틱하고 불타오르는 어조',
+                        },
+                        {
+                          id: 'whisper',
+                          title: '속삭임',
+                          desc: '조용히 속삭이는 ASMR',
+                        },
+                      ] as const
+                    ).map((opt) => {
+                      const isSelected = voice === opt.id;
+                      return (
+                        <Pressable
+                          key={opt.id}
+                          onPress={() => setVoice(opt.id)}
+                          style={({ pressed }) => [
+                            styles.card,
+                            isSelected && styles.cardSelected,
+                            pressed && styles.actionPressed,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.cardTitle,
+                              isSelected && styles.cardTitleSelected,
+                            ]}
+                          >
+                            {opt.title}
+                          </Text>
+                          <Text style={styles.cardDesc}>{opt.desc}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Step 4: Duration Selection */}
+              {step === 4 && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleSection}>
+                    <Text style={styles.titleText}>팟캐스트 길이를</Text>
+                    <Text style={styles.titleText}>정해주세요</Text>
+                    <Text style={styles.subtitleText}>
+                      이동 시간에 맞게 골라요
+                    </Text>
+                  </View>
+
+                  <View style={styles.optionsList}>
+                    {(
+                      [
+                        {
+                          id: 5,
+                          title: '5분',
+                          desc: '핵심만 쏙쏙',
+                        },
+                        {
+                          id: 10,
+                          title: '10분',
+                          desc: '적당한 깊이',
+                        },
+                        {
+                          id: 20,
+                          title: '20분',
+                          desc: '충분한 설명',
+                        },
+                      ] as const
+                    ).map((opt) => {
+                      const isSelected = duration === opt.id;
+                      return (
+                        <Pressable
+                          key={opt.id}
+                          onPress={() => setDuration(opt.id)}
+                          style={({ pressed }) => [
+                            styles.card,
+                            isSelected && styles.cardSelected,
+                            pressed && styles.actionPressed,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.cardTitle,
+                              isSelected && styles.cardTitleSelected,
+                            ]}
+                          >
+                            {opt.title}
+                          </Text>
+                          <Text style={styles.cardDesc}>{opt.desc}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Bottom Fixed Navigation Button */}
+            <View style={styles.footer}>
               <Pressable
-                onPress={handleRemoveFile}
-                style={({ pressed }) => [styles.fileRemoveButton, pressed && styles.actionPressed]}
+                onPress={() => {
+                  if (step === 1 && !topic.trim()) return;
+                  if (step < 4) {
+                    transitionToStep((step + 1) as any);
+                  } else {
+                    handleCreate();
+                  }
+                }}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  step === 1 && !topic.trim() && styles.primaryButtonDisabled,
+                  pressed && styles.primaryButtonPressed,
+                ]}
+                disabled={step === 1 && !topic.trim()}
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Text style={styles.primaryButtonText}>
+                  {step === 4 ? '생성하기' : '다음으로'}
+                </Text>
               </Pressable>
             </View>
-          )}
-        </View>
-
-        {/* 2. 팟캐스트 길이(시간) 섹션 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. 팟캐스트 재생 시간</Text>
-          <Text style={styles.sectionSubtitle}>학습 밀도와 출퇴근 시간에 딱 맞춘 오디오 분량을 조절해보세요.</Text>
-
-          <View style={styles.durationRow}>
-            {([5, 10, 20, 30] as DurationMin[]).map((m) => {
-              const isSelected = duration === m;
-              return (
-                <Pressable
-                  key={m}
-                  onPress={() => setDuration(m)}
-                  style={({ pressed }) => [
-                    styles.durationChip,
-                    isSelected && styles.durationChipSelected,
-                    pressed && styles.actionPressed,
-                  ]}
-                >
-                  <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
-                    {m}분
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* 3. 팟캐스트 포맷 설정 섹션 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. 팟캐스트 구성 포맷</Text>
-          <Text style={styles.sectionSubtitle}>자료를 어떤 형식의 오디오 연출로 구성할지 선택합니다.</Text>
-
-          <View style={styles.formatList}>
-            {formatOptions.map((opt) => {
-              const isSelected = format === opt.id;
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setFormat(opt.id)}
-                  style={[styles.formatCard, isSelected && styles.formatCardSelected]}
-                >
-                  <View style={[styles.formatIconBg, { backgroundColor: opt.color + '15' }]}>
-                    <Ionicons name={opt.icon} size={24} color={opt.color} />
-                  </View>
-                  <View style={styles.formatInfo}>
-                    <Text style={styles.formatTitle}>{opt.title}</Text>
-                    <Text style={styles.formatDesc}>{opt.desc}</Text>
-                  </View>
-                  {isSelected && (
-                    <View style={styles.selectedIndicator}>
-                      <Ionicons name="checkmark-circle" size={22} color="#3B82F6" />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* 4. TTS 성격(TtsVoice) 설정 섹션 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. 스터디 캐스터 목소리 톤</Text>
-          <Text style={styles.sectionSubtitle}>오디오를 진행할 AI 캐스터의 스타일과 성격을 골라보세요.</Text>
-
-          <View style={styles.voiceList}>
-            {voiceOptions.map((opt) => {
-              const isSelected = voice === opt.id;
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setVoice(opt.id)}
-                  style={[styles.voiceCard, isSelected && styles.voiceCardSelected]}
-                >
-                  <View style={[styles.voiceAvatar, { backgroundColor: opt.voiceColor + '10' }]}>
-                    <Text style={styles.voiceEmoji}>{opt.emoji}</Text>
-                  </View>
-                  <View style={styles.voiceInfo}>
-                    <View style={styles.voiceHeaderRow}>
-                      <Text style={styles.voiceTitle}>{opt.title}</Text>
-                      <View style={[styles.voiceBadge, { backgroundColor: opt.voiceColor + '15' }]}>
-                        <Text style={[styles.voiceBadgeText, { color: opt.voiceColor }]}>{opt.badge}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.voiceDesc}>{opt.desc}</Text>
-                  </View>
-                  {isSelected && (
-                    <View style={styles.selectedIndicator}>
-                      <Ionicons name="checkmark-circle" size={22} color="#3B82F6" />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.spacer} />
-      </ScrollView>
-
-      {/* 하단 CTA 고정 생성하기 버튼 */}
-      <View style={styles.footerButtonContainer}>
-        <Pressable
-          onPress={handleCreate}
-          disabled={isSubmitting}
-          style={({ pressed }) => [
-            styles.createButton,
-            !selectedFile && styles.createButtonDisabled,
-            pressed && styles.createButtonPressed,
-          ]}
+          </Animated.View>
+        </>
+      ) : (
+        /* Step 5: Loading Progress Screen */
+        <Animated.View
+          style={[styles.step5Container, { opacity: stepFadeAnim }]}
         >
-          {isSubmitting ? (
-            <View style={styles.submittingContainer}>
-              <Text style={styles.createButtonText}>오디오 대본 및 구성 분석 중...</Text>
+          {/* Circular Progress Ring Container with spinning outer ring and static inner text */}
+          <View style={styles.graphicWrapper}>
+            <View
+              style={[
+                styles.progressRing,
+                {
+                  transform: [{ rotate: '45deg' }],
+                  borderTopColor: prog.borderTopColor,
+                  borderRightColor: prog.borderRightColor,
+                  borderBottomColor: prog.borderBottomColor,
+                  borderLeftColor: prog.borderLeftColor,
+                  borderColor: prog.borderColor,
+                },
+              ]}
+            />
+            <View style={styles.progressRingInner}>
+              <Text style={styles.progressPercentage}>{prog.percentage}</Text>
             </View>
-          ) : (
-            <Text style={styles.createButtonText}>나만의 AI 학습 팟캐스트 생성하기</Text>
-          )}
-        </Pressable>
-      </View>
+          </View>
+
+          <View style={styles.titleSectionCenter}>
+            <Text style={styles.generatingTitle}>
+              팟캐스트를 생성하고 있어요
+            </Text>
+            <Text style={styles.generatingSubtitle}>잠시만 기다려 주세요</Text>
+          </View>
+
+          <View style={styles.checklistContainer}>
+            {renderProgressItem(1, '자료 분석', '진행중', '대기중')}
+            {renderProgressItem(2, '스크립트 생성', '진행중', '대기중')}
+            {renderProgressItem(3, 'TTS 변환', '진행중', '대기중')}
+          </View>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -315,334 +593,328 @@ export default function CreatePodcastScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FDFDFD',
   },
-  header: {
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 12,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#3B82F6',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-    fontFamily: Fonts.rounded,
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0F172A',
-    fontFamily: Fonts.rounded,
+  headerSpacer: {
+    width: 44,
+  },
+  actionPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+  },
+  progressDotActive: {
+    width: 24,
+    backgroundColor: '#1E6AF4',
   },
   scrollContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 120, // 하단 고정 버튼 여유 공간 확보
+    paddingBottom: 120,
+    flexGrow: 1,
   },
-  section: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
+  stepContainer: {
+    paddingTop: 16,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#1E293B',
-    marginBottom: 4,
-    fontFamily: Fonts.rounded,
+  titleSection: {
+    marginBottom: 32,
   },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 18,
-    marginBottom: 16,
-    fontFamily: Fonts.rounded,
+  titleSectionCenter: {
+    alignItems: 'center',
+    marginBottom: 40,
   },
-  uploadZone: {
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    borderStyle: 'dashed',
+  titleText: {
+    fontSize: 24,
+    color: '#100C08',
+    fontFamily: Fonts.pretendardBold,
+    lineHeight: 32,
+  },
+  subtitleText: {
+    fontSize: 15,
+    color: '#100C08',
+    opacity: 0.5,
+    fontFamily: Fonts.pretendardRegular,
+    marginTop: 6,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 106, 244, 0.01)',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     borderRadius: 16,
-    paddingVertical: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  uploadZonePressed: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#3B82F6',
-  },
-  uploadIconContainer: {
-    width: 56,
+    paddingHorizontal: 16,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  inputWrapperFilled: {
+    borderColor: '#1E6AF4',
+    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+  },
+  textInput: {
+    flex: 1,
+    height: '100%',
+    color: '#100C08',
+    fontSize: 15,
+    fontFamily: Fonts.pretendardMedium,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  recommendSection: {
+    marginTop: 32,
+  },
+  recommendTitle: {
+    fontSize: 15,
+    color: '#100C08',
+    fontFamily: Fonts.pretendardMedium,
     marginBottom: 12,
   },
-  uploadMainText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 4,
-    fontFamily: Fonts.rounded,
-  },
-  uploadSubText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontFamily: Fonts.rounded,
-  },
-  fileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+  recommendChip: {
+    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    borderRadius: 9999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
-    borderRadius: 14,
-    padding: 12,
+    borderColor: 'transparent',
   },
-  fileIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+  recommendChipSelected: {
+    borderColor: '#1E6AF4',
+    backgroundColor: 'rgba(30, 106, 244, 0.08)',
   },
-  fileInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  fileName: {
+  recommendChipText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 2,
-    fontFamily: Fonts.rounded,
+    color: '#100C08',
+    fontFamily: Fonts.pretendardRegular,
   },
-  fileSize: {
-    fontSize: 12,
-    color: '#64748B',
-    fontFamily: Fonts.rounded,
+  recommendChipTextSelected: {
+    color: '#1E6AF4',
+    fontFamily: Fonts.pretendardMedium,
   },
-  fileRemoveButton: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  actionPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.96 }],
-  },
-  durationRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  durationChip: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  durationChipSelected: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  durationChipText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#475569',
-    fontFamily: Fonts.rounded,
-  },
-  durationChipTextSelected: {
-    color: '#FFFFFF',
-  },
-  formatList: {
+  optionsList: {
     gap: 12,
   },
-  formatCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
     borderColor: '#E2E8F0',
     borderRadius: 16,
-    padding: 16,
-    position: 'relative',
+    padding: 17,
+    gap: 4,
   },
-  formatCardSelected: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#3B82F6',
-    borderWidth: 2,
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+  cardSelected: {
+    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    borderColor: '#1E6AF4',
   },
-  formatIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
+  cardTitle: {
+    fontSize: 16,
+    color: '#100C08',
+    fontFamily: Fonts.pretendardMedium,
   },
-  formatInfo: {
-    flex: 1,
-    paddingRight: 24,
+  cardTitleSelected: {
+    color: '#1E6AF4',
+    fontFamily: Fonts.pretendardBold,
   },
-  formatTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 4,
-    fontFamily: Fonts.rounded,
+  cardDesc: {
+    fontSize: 13,
+    color: '#100C08',
+    opacity: 0.5,
+    fontFamily: Fonts.pretendardRegular,
+    lineHeight: 18,
   },
-  formatDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 16,
-    fontFamily: Fonts.rounded,
-  },
-  selectedIndicator: {
-    position: 'absolute',
-    right: 16,
-  },
-  voiceList: {
-    gap: 12,
-  },
-  voiceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    padding: 16,
-    position: 'relative',
-  },
-  voiceCardSelected: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#3B82F6',
-    borderWidth: 2,
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  voiceAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  voiceEmoji: {
-    fontSize: 24,
-  },
-  voiceInfo: {
-    flex: 1,
-    paddingRight: 24,
-  },
-  voiceHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    gap: 8,
-  },
-  voiceTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1E293B',
-    fontFamily: Fonts.rounded,
-  },
-  voiceBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  voiceBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: Fonts.rounded,
-  },
-  voiceDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 16,
-    fontFamily: Fonts.rounded,
-  },
-  spacer: {
-    height: 40,
-  },
-  footerButtonContainer: {
+  footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    paddingTop: 14,
-    paddingBottom: 24,
     paddingHorizontal: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    paddingBottom: 28,
+    paddingTop: 12,
+    backgroundColor: '#FDFDFD',
   },
-  createButton: {
-    backgroundColor: '#2563EB',
+  primaryButton: {
+    backgroundColor: '#1E6AF4',
     borderRadius: 16,
-    paddingVertical: 16,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#1E6AF4',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  createButtonPressed: {
+  primaryButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
-  createButtonDisabled: {
-    backgroundColor: '#94A3B8',
+  primaryButtonDisabled: {
+    backgroundColor: 'rgba(30, 106, 244, 0.15)',
     shadowOpacity: 0,
     elevation: 0,
   },
-  createButtonText: {
+  primaryButtonText: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '600',
     color: '#FFFFFF',
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.pretendardBold,
   },
-  submittingContainer: {
+  step5Container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 48,
+    paddingBottom: 80,
+  },
+  graphicWrapper: {
+    width: 138,
+    height: 138,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 48,
+    position: 'relative',
+  },
+  progressRing: {
+    position: 'absolute',
+    width: 138,
+    height: 138,
+    borderRadius: 69,
+    borderWidth: 8,
+    backgroundColor: 'transparent',
+  },
+  progressRingInner: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressPercentage: {
+    fontSize: 28,
+    fontFamily: Fonts.googleSansFlexBold,
+    color: '#1E6AF4',
+  },
+  generatingTitle: {
+    fontSize: 20,
+    color: '#100C08',
+    fontFamily: Fonts.pretendardBold,
+    textAlign: 'center',
+  },
+  generatingSubtitle: {
+    fontSize: 15,
+    color: '#100C08',
+    opacity: 0.5,
+    fontFamily: Fonts.pretendardRegular,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  checklistContainer: {
+    width: '100%',
+    paddingLeft: 12,
+  },
+  checklistItemContainer: {
+    width: '100%',
+  },
+  checklistItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 16,
+  },
+  circleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circleIconActive: {
+    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+    borderWidth: 2,
+    borderColor: '#1E6AF4',
+  },
+  circleIconComplete: {
+    backgroundColor: '#1E6AF4',
+  },
+  circleIconWaiting: {
+    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+  },
+  circleTextActive: {
+    color: '#1E6AF4',
+    fontSize: 15,
+    fontFamily: Fonts.googleSansFlexMedium,
+  },
+  circleTextComplete: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontFamily: Fonts.googleSansFlexMedium,
+  },
+  circleTextWaiting: {
+    color: '#100C08',
+    opacity: 0.5,
+    fontSize: 15,
+    fontFamily: Fonts.googleSansFlexMedium,
+  },
+  checklistTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 2,
+  },
+  checklistTitle: {
+    fontSize: 15,
+    fontFamily: Fonts.pretendardMedium,
+    color: '#100C08',
+  },
+  checklistTitleWaiting: {
+    color: '#100C08',
+    opacity: 0.5,
+  },
+  checklistStatus: {
+    fontSize: 13,
+    fontFamily: Fonts.pretendardRegular,
+  },
+  checklistStatusActive: {
+    color: '#1E6AF4',
+  },
+  checklistStatusComplete: {
+    color: '#1E6AF4',
+  },
+  checklistStatusWaiting: {
+    color: '#100C08',
+    opacity: 0.5,
+  },
+  verticalLine: {
+    width: 2,
+    height: 32,
+    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+    marginLeft: 21,
+  },
+  verticalLineComplete: {
+    backgroundColor: '#1E6AF4',
   },
 });
