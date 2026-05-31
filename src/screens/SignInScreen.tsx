@@ -292,13 +292,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#100C08',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardBold,
   },
   subtitleText: {
     fontSize: 15,
     color: '#100C08',
     opacity: 0.5,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   formContainer: {
     gap: 12,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 15,
     color: '#100C08',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: '#100C08',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
     height: '100%',
   },
   eyeButton: {
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontSize: 13,
     color: '#1E6AF4',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   actionPressed: {
     opacity: 0.7,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#FDFDFD',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardMedium,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#100C08',
     marginHorizontal: 10,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   googleButton: {
     height: 56,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 15,
     color: '#100C08',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   signUpLinkContainer: {
     marginTop: 32,
@@ -437,6 +437,6 @@ const styles = StyleSheet.create({
   signUpLinkText: {
     fontSize: 15,
     color: '#1E6AF4',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
 });

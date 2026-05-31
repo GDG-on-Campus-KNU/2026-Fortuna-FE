@@ -820,12 +820,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#100C08',
     marginBottom: 8,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
   },
   landingSubtitle: {
     fontSize: 15,
     color: '#64748B',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   socialBtnGroup: {
     gap: 12,
@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#100C08',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardSemiBold,
   },
   landingLoader: {
     marginTop: 20,
@@ -877,13 +877,13 @@ const styles = StyleSheet.create({
   landingFooterText: {
     fontSize: 15,
     color: 'rgba(16, 12, 8, 0.5)',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   landingFooterLink: {
     fontSize: 15,
     fontWeight: '800',
     color: '#1E6AF4',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
   },
   /* ========================================================
      2. 폼 상세 화면 스타일
@@ -913,7 +913,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardBold,
   },
   headerBarPlaceholder: {
     width: 40,
@@ -931,13 +931,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 8,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
   },
   subtitleText: {
     fontSize: 13,
     color: '#64748B',
     lineHeight: 18,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   inputSection: {
     marginBottom: 20,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#334155',
     marginBottom: 8,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardBold,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -980,7 +980,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: '#0F172A',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
     height: '100%',
   },
   eyeButton: {
@@ -991,21 +991,21 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     marginTop: 6,
     fontWeight: '600',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardSemiBold,
   },
   successText: {
     fontSize: 12,
     color: '#10B981',
     marginTop: 6,
     fontWeight: '600',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardSemiBold,
   },
   helperText: {
     fontSize: 12,
     color: '#64748B',
     marginTop: 6,
     lineHeight: 16,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   helperTextError: {
     color: '#EF4444',
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#1E293B',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
   },
   termsDivider: {
     height: 1,
@@ -1077,7 +1077,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: '#475569',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   requiredMark: {
     color: '#1E6AF4',
@@ -1118,7 +1118,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#FFFFFF',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
   },
   bottomLinkContainer: {
     flexDirection: 'row',
@@ -1130,13 +1130,13 @@ const styles = StyleSheet.create({
   bottomInfoText: {
     fontSize: 13,
     color: '#64748B',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   bottomLinkText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#1E6AF4',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardBold,
   },
   /* ========================================================
      3. 회원가입 성공 오버레이 모달 스타일
@@ -1199,14 +1199,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 8,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
     textAlign: 'center',
   },
   successSub: {
     fontSize: 14,
     color: '#64748B',
     marginBottom: 24,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
     textAlign: 'center',
   },
   successTipBox: {
@@ -1221,7 +1221,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#475569',
     lineHeight: 18,
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardRegular,
   },
   successTipBold: {
     fontWeight: '700',
@@ -1248,6 +1248,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#FFFFFF',
-    fontFamily: Fonts.pretendard,
+    fontFamily: Fonts.pretendardExtraBold,
   },
 });

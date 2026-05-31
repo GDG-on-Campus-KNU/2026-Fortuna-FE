@@ -46,7 +46,16 @@ export const Fonts = Platform.select({
     googleSansFlexBold: 'GoogleSansFlex-700',
     googleSansFlexExtraBold: 'GoogleSansFlex-800',
     googleSansFlexBlack: 'GoogleSansFlex-900',
-    pretendard: 'Pretendard',
+    pretendard: 'Pretendard-Regular',
+    pretendardThin: 'Pretendard-Thin',
+    pretendardExtraLight: 'Pretendard-ExtraLight',
+    pretendardLight: 'Pretendard-Light',
+    pretendardRegular: 'Pretendard-Regular',
+    pretendardMedium: 'Pretendard-Medium',
+    pretendardSemiBold: 'Pretendard-SemiBold',
+    pretendardBold: 'Pretendard-Bold',
+    pretendardExtraBold: 'Pretendard-ExtraBold',
+    pretendardBlack: 'Pretendard-Black',
   },
   default: {
     sans: 'normal',
@@ -62,7 +71,16 @@ export const Fonts = Platform.select({
     googleSansFlexBold: 'GoogleSansFlex-700',
     googleSansFlexExtraBold: 'GoogleSansFlex-800',
     googleSansFlexBlack: 'GoogleSansFlex-900',
-    pretendard: 'Pretendard',
+    pretendard: 'Pretendard-Regular',
+    pretendardThin: 'Pretendard-Thin',
+    pretendardExtraLight: 'Pretendard-ExtraLight',
+    pretendardLight: 'Pretendard-Light',
+    pretendardRegular: 'Pretendard-Regular',
+    pretendardMedium: 'Pretendard-Medium',
+    pretendardSemiBold: 'Pretendard-SemiBold',
+    pretendardBold: 'Pretendard-Bold',
+    pretendardExtraBold: 'Pretendard-ExtraBold',
+    pretendardBlack: 'Pretendard-Black',
   },
   web: {
     sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -89,6 +107,24 @@ export const Fonts = Platform.select({
     googleSansFlexBlack:
       "GoogleSansFlex-900, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
     pretendard:
-      "Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "Pretendard-Regular, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardThin:
+      "Pretendard-Thin, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardExtraLight:
+      "Pretendard-ExtraLight, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardLight:
+      "Pretendard-Light, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardRegular:
+      "Pretendard-Regular, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardMedium:
+      "Pretendard-Medium, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardSemiBold:
+      "Pretendard-SemiBold, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardBold:
+      "Pretendard-Bold, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardExtraBold:
+      "Pretendard-ExtraBold, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    pretendardBlack:
+      "Pretendard-Black, Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
 });

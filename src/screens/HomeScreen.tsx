@@ -6,20 +6,37 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
+  Alert,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 import { useContents } from '@/src/entities/content/hooks';
-import type { AudioFormat, Content, TtsVoice } from '@/src/entities/content/model';
+import type {
+  AudioFormat,
+  Content,
+  TtsVoice,
+} from '@/src/entities/content/model';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
 import { Fonts } from '@/src/shared/constants/theme';
+
+const { width } = Dimensions.get('window');
+const CARD_MARGIN = 12;
+const CARD_SIZE = (width - 48 - CARD_MARGIN) / 2; // 가로 마진 24*2 = 48 제외 후 2등분
+
+type GridItem = Content | { id: string; isAddCard: boolean };
 
 export default function HomeScreen() {
   const { data: contents, loading, refresh } = useContents();
   const initAudio = useAudioStore((state) => state.init);
+  const activeTrack = useAudioStore((state) => state.activeTrack);
+  const playbackState = useAudioStore((state) => state.playbackState);
+  const togglePlayback = useAudioStore((state) => state.togglePlayback);
 
   const getFormatDetails = (format: AudioFormat) => {
     switch (format) {
@@ -84,23 +101,63 @@ export default function HomeScreen() {
 
     try {
       await initAudio(track);
-      // 오디오를 즉시 재생 상태로 만듭니다.
       const state = useAudioStore.getState();
       if (state.playbackState !== 'playing') {
         await state.togglePlayback();
       }
       router.push('/player');
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('오디오 초기화 오류:', err);
     }
   };
 
-  const renderContentItem = ({ item }: { item: Content }) => {
-    const format = getFormatDetails(item.format);
-    const voice = getVoiceDetails(item.ttsVoice);
+  const handleProfilePress = () => {
+    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: () => {
+          router.replace('/signin');
+        },
+      },
+    ]);
+  };
+
+  const handleCreateNewNotebook = () => {
+    router.push('/create');
+  };
+
+  const renderGridItem = ({ item }: { item: GridItem }) => {
+    if ('isAddCard' in item) {
+      // "+ 새 노트북" 카드
+      return (
+        <Pressable
+          onPress={handleCreateNewNotebook}
+          style={({ pressed }) => [
+            styles.card,
+            styles.addCard,
+            pressed && styles.cardPressed,
+          ]}
+        >
+          <View style={styles.addIconContainer}>
+            <Ionicons
+              name="add"
+              size={24}
+              color="#100C08"
+              style={{ opacity: 0.9 }}
+            />
+          </View>
+          <Text style={styles.addCardText}>새 노트북</Text>
+        </Pressable>
+      );
+    }
+
+    // 일반 노트북 카드
     const isDone = item.status === 'done';
     const isGenerating = item.status === 'generating';
+    const mockDate = '2026. 5. 26.';
 
     return (
       <Pressable
@@ -112,53 +169,30 @@ export default function HomeScreen() {
         ]}
         disabled={!isDone}
       >
-        <View style={styles.cardHeader}>
-          {/* 포맷 배지 */}
-          <View style={[styles.badge, { backgroundColor: format.bg }]}>
-            <Ionicons name={format.icon} size={14} color={format.color} style={styles.badgeIcon} />
-            <Text style={[styles.badgeText, { color: format.color }]}>{format.label}</Text>
-          </View>
-
-          {/* 상태 표시 */}
-          {isGenerating ? (
-            <View style={[styles.statusBadge, styles.generatingBadge]}>
-              <ActivityIndicator size="small" color="#F59E0B" style={styles.spinner} />
-              <Text style={styles.generatingText}>생성 중</Text>
-            </View>
-          ) : isDone ? (
-            <View style={[styles.statusBadge, styles.doneBadge]}>
-              <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-              <Text style={styles.doneText}>준비 완료</Text>
-            </View>
-          ) : (
-            <View style={[styles.statusBadge, styles.failedBadge]}>
-              <Ionicons name="alert-circle" size={14} color="#EF4444" />
-              <Text style={styles.failedText}>실패</Text>
-            </View>
-          )}
+        <View style={styles.notebookIconBg}>
+          <Ionicons name="bulb" size={24} color="#1E6AF4" />
         </View>
 
-        {/* 타이틀 */}
-        <Text style={styles.cardTitle} numberOfLines={2}>
-          {item.title}
-        </Text>
+        <View style={styles.notebookTextContainer}>
+          <Text style={styles.notebookTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
 
-        {/* 푸터 정보 */}
-        <View style={styles.cardFooter}>
-          <View style={styles.metaRow}>
-            <Ionicons name="time-outline" size={14} color="#64748B" />
-            <Text style={styles.metaText}>{item.duration}분 분량</Text>
-          </View>
-          <View style={styles.metaDot} />
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>
-              {voice.emoji} {voice.label}
-            </Text>
-          </View>
-
-          {isDone && (
-            <View style={styles.playIconContainer}>
-              <Ionicons name="play-circle" size={26} color="#2563EB" />
+          {isGenerating ? (
+            <View style={styles.statusRow}>
+              <ActivityIndicator
+                size="small"
+                color="#F59E0B"
+                style={styles.spinner}
+              />
+              <Text style={styles.statusTextGenerating}>생성 중</Text>
+            </View>
+          ) : isDone ? (
+            <Text style={styles.notebookDate}>{mockDate}</Text>
+          ) : (
+            <View style={styles.statusRow}>
+              <Ionicons name="alert-circle" size={14} color="#EF4444" />
+              <Text style={styles.statusTextFailed}>실패</Text>
             </View>
           )}
         </View>
@@ -166,54 +200,98 @@ export default function HomeScreen() {
     );
   };
 
-  const renderEmptyComponent = () => {
-    if (loading) {
-      return (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loadingText}>학습 캐스트를 불러오는 중입니다...</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.centerContainer}>
-        <View style={styles.emptyIconBg}>
-          <Ionicons name="musical-notes-outline" size={48} color="#94A3B8" />
-        </View>
-        <Text style={styles.emptyTitle}>생성된 학습 캐스트가 없습니다</Text>
-        <Text style={styles.emptySubtitle}>
-          두 번째 탭에서 나만의 학습 자료를 업로드하고 첫 팟캐스트를 생성해보세요!
-        </Text>
-      </View>
-    );
-  };
+  // 기존 콘텐츠 목록 뒤에 "+ 새 노트북" 카드를 추가해 그리드 데이터 생성
+  const gridData: GridItem[] = [
+    ...(contents || []),
+    { id: 'add-new-notebook', isAddCard: true },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 백그라운드 피그마 소프트 블루 그라데이션 */}
+      <LinearGradient
+        colors={['#EBF2FE', '#FDFDFD']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* 상단 헤더 */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Studycast</Text>
-        </View>
+        <Text style={styles.headerTitle}>Studycast</Text>
         <Pressable
-          onPress={() => refresh()}
-          style={({ pressed }) => [styles.refreshButton, pressed && styles.buttonPressed]}
+          onPress={handleProfilePress}
+          style={({ pressed }) => [
+            styles.profileButton,
+            pressed && styles.buttonPressed,
+          ]}
         >
-          <Ionicons name="refresh-outline" size={22} color="#1E293B" />
+          <Ionicons name="person" size={22} color="#100C08" />
         </Pressable>
       </View>
 
+      {/* 그리드 목록 */}
       <FlatList
-        data={contents}
-        renderItem={renderContentItem}
+        data={gridData}
+        renderItem={renderGridItem}
         keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={renderEmptyComponent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={loading && contents.length > 0} onRefresh={refresh} colors={['#2563EB']} />
+          <RefreshControl
+            refreshing={loading && (contents || []).length > 0}
+            onRefresh={refresh}
+            colors={['#1E6AF4']}
+          />
         }
       />
+
+      {/* 현재 재생 중인 미니 플레이어 바 */}
+      {activeTrack && (
+        <Pressable
+          onPress={() => router.push('/player')}
+          style={({ pressed }) => [
+            styles.nowPlayingBarContainer,
+            pressed && styles.nowPlayingBarPressed,
+          ]}
+        >
+          {/* 1. 백그라운드 블러 레이어 */}
+          <BlurView
+            intensity={50}
+            tint="light"
+            experimentalBlurMethod="dimezisBlurView"
+            style={StyleSheet.absoluteFillObject}
+          />
+
+          {/* 2. 선명하게 유지할 콘텐츠 레이어 */}
+          <View style={styles.nowPlayingBarContent}>
+            <View style={styles.nowPlayingLeft}>
+              <View style={styles.nowPlayingThumb}>
+                <Ionicons name="bulb" size={20} color="#1E6AF4" />
+              </View>
+              <View style={styles.nowPlayingInfo}>
+                <Text style={styles.nowPlayingLabel}>현재 재생 중</Text>
+                <Text style={styles.nowPlayingTitle} numberOfLines={1}>
+                  {activeTrack.title}
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={togglePlayback}
+              style={({ pressed }) => [
+                styles.playButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Ionicons
+                name={playbackState === 'playing' ? 'pause' : 'play'}
+                size={24}
+                color="#1E6AF4"
+              />
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }
@@ -221,7 +299,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FDFDFD',
   },
   header: {
     flexDirection: 'row',
@@ -231,35 +309,21 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#3B82F6',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-    fontFamily: Fonts.rounded,
-  },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0F172A',
-    fontFamily: Fonts.rounded,
+    fontSize: 40,
+    color: '#100C08',
+    fontFamily: Fonts.googleSansFlexBold,
+    letterSpacing: -0.5,
   },
-  refreshButton: {
+  profileButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(16, 12, 8, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: 'rgba(16, 12, 8, 0.04)',
   },
   buttonPressed: {
     opacity: 0.7,
@@ -267,159 +331,149 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 100, // 미니 플레이어가 겹치지 않게 여유 공간 부여
     flexGrow: 1,
   },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: CARD_MARGIN,
+  },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 3,
+    backgroundColor: 'rgba(30, 106, 244, 0.05)',
+    width: CARD_SIZE,
+    height: CARD_SIZE,
+    borderRadius: 32,
+    padding: 16,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
   },
   cardPressed: {
     transform: [{ scale: 0.98 }],
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(30, 106, 244, 0.08)',
   },
   cardDisabled: {
+    opacity: 0.8,
+  },
+  addCard: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addCardText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#100C08',
     opacity: 0.9,
+    fontFamily: Fonts.pretendardMedium,
+    textAlign: 'center',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  notebookIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 14,
+    shadowColor: '#1E6AF4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 99,
-  },
-  badgeIcon: {
-    marginRight: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: Fonts.rounded,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+  notebookTextContainer: {
     gap: 4,
   },
-  generatingBadge: {
-    backgroundColor: '#FFFBEB',
+  notebookTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#100C08',
+    fontFamily: Fonts.pretendardSemiBold,
+    lineHeight: 20,
   },
-  generatingText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#D97706',
-    fontFamily: Fonts.rounded,
+  notebookDate: {
+    fontSize: 13,
+    color: '#100C08',
+    opacity: 0.5,
+    fontFamily: Fonts.pretendardRegular,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   spinner: {
-    marginRight: 2,
     transform: [{ scale: 0.8 }],
   },
-  doneBadge: {
-    backgroundColor: '#ECFDF5',
-  },
-  doneText: {
+  statusTextGenerating: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#059669',
-    fontFamily: Fonts.rounded,
+    fontWeight: 'bold',
+    color: '#D97706',
+    fontFamily: Fonts.pretendardBold,
   },
-  failedBadge: {
-    backgroundColor: '#FEF2F2',
-  },
-  failedText: {
+  statusTextFailed: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#DC2626',
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.pretendardBold,
   },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1E293B',
-    lineHeight: 24,
-    marginBottom: 16,
-    fontFamily: Fonts.rounded,
+  nowPlayingBarContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(30, 106, 244, 0.12)',
   },
-  cardFooter: {
+  nowPlayingBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 14,
+    justifyContent: 'space-between',
+    padding: 12,
+    backgroundColor: 'rgba(30, 106, 244, 0.06)',
   },
-  metaRow: {
+  nowPlayingBarPressed: {
+    opacity: 0.85,
+  },
+  nowPlayingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-  },
-  metaText: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '600',
-    fontFamily: Fonts.rounded,
-  },
-  metaDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1',
-    marginHorizontal: 8,
-  },
-  playIconContainer: {
-    marginLeft: 'auto',
-  },
-  centerContainer: {
+    gap: 12,
     flex: 1,
+  },
+  nowPlayingThumb: {
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 80,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#64748B',
-    fontFamily: Fonts.rounded,
-  },
-  emptyIconBg: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#F1F5F9',
+  nowPlayingInfo: {
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
+    flex: 1,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 8,
-    fontFamily: Fonts.rounded,
+  nowPlayingLabel: {
+    fontSize: 13,
+    color: '#100C08',
+    opacity: 0.5,
+    fontFamily: Fonts.pretendardRegular,
   },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 20,
-    fontFamily: Fonts.rounded,
+  nowPlayingTitle: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#100C08',
+    fontFamily: Fonts.pretendardMedium,
+  },
+  playButton: {
+    padding: 4,
   },
 });
