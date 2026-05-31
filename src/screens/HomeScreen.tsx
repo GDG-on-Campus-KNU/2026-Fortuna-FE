@@ -1,20 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Dimensions,
   FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
-  Alert,
-  Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useContents } from '@/src/entities/content/hooks';
 import type {
@@ -32,6 +33,7 @@ const CARD_SIZE = (width - 48 - CARD_MARGIN) / 2; // 가로 마진 24*2 = 48 제
 type GridItem = Content | { id: string; isAddCard: boolean };
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const { data: contents, loading, refresh } = useContents();
   const initAudio = useAudioStore((state) => state.init);
   const activeTrack = useAudioStore((state) => state.activeTrack);
@@ -208,15 +210,68 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* 백그라운드 피그마 소프트 블루 그라데이션 */}
       <LinearGradient
         colors={['#EBF2FE', '#FDFDFD']}
         style={StyleSheet.absoluteFillObject}
       />
 
+      {/* 마스킹된 그리드 목록 */}
+      <MaskedView
+        style={styles.maskedView}
+        maskElement={
+          <View style={StyleSheet.absoluteFillObject}>
+            {/* 1. 상단 투명 영역 (헤더 영역: 완전히 가려짐) */}
+            <View style={{ height: insets.top + 68 }} />
+
+            {/* 2. 그라데이션 페이드 영역 (점점 나타남) */}
+            <LinearGradient
+              colors={['rgba(0, 0, 0, 0)', '#000000']}
+              style={{ height: 40 }}
+            />
+
+            {/* 3. 하단 불투명 영역 (정상적으로 보임) */}
+            <View style={{ flex: 1, backgroundColor: '#000000' }} />
+          </View>
+        }
+      >
+        <FlatList
+          data={gridData}
+          renderItem={renderGridItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={[
+            styles.listContainer,
+            {
+              paddingTop: insets.top + 108, // 헤더 높이만큼 상단 여백 확보
+              paddingBottom: insets.bottom + (activeTrack ? 100 : 24),
+            },
+          ]}
+          clipToPadding={false}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading && (contents || []).length > 0}
+              onRefresh={refresh}
+              colors={['#1E6AF4']}
+              progressViewOffset={insets.top + 108} // pull-to-refresh spinner sits below header
+            />
+          }
+        />
+      </MaskedView>
+
       {/* 상단 헤더 */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 20,
+          },
+        ]}
+        pointerEvents="box-none"
+      >
         <Text style={styles.headerTitle}>Studycast</Text>
         <Pressable
           onPress={handleProfilePress}
@@ -229,30 +284,13 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* 그리드 목록 */}
-      <FlatList
-        data={gridData}
-        renderItem={renderGridItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading && (contents || []).length > 0}
-            onRefresh={refresh}
-            colors={['#1E6AF4']}
-          />
-        }
-      />
-
       {/* 현재 재생 중인 미니 플레이어 바 */}
       {activeTrack && (
         <Pressable
           onPress={() => router.push('/player')}
           style={({ pressed }) => [
             styles.nowPlayingBarContainer,
+            { bottom: insets.bottom + 16 },
             pressed && styles.nowPlayingBarPressed,
           ]}
         >
@@ -293,7 +331,7 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -303,12 +341,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FDFDFD',
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 20,
     paddingBottom: 16,
+    zIndex: 10,
+  },
+  maskedView: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 40,
