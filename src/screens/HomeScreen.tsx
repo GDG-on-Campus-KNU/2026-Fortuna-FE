@@ -173,7 +173,7 @@ export default function HomeScreen() {
         disabled={!isDone}
       >
         <View style={styles.notebookIconBg}>
-          <Ionicons name="bulb" size={24} color="#1E6AF4" />
+          <Ionicons name="bulb" size={32} color="#1E6AF4" />
         </View>
 
         <View style={styles.notebookTextContainer}>
@@ -249,7 +249,6 @@ export default function HomeScreen() {
               paddingBottom: insets.bottom + (activeTrack ? 100 : 24),
             },
           ]}
-          clipToPadding={false}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -423,15 +422,8 @@ const styles = StyleSheet.create({
   notebookIconBg: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1E6AF4',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   notebookTextContainer: {
     gap: 4,
