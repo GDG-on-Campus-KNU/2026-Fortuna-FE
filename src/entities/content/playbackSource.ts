@@ -42,6 +42,7 @@ const TTS_VOICE_ARTIST: Record<TtsVoice, string> = {
   friend: '친구 톤 · StudyCast',
   professor: '교수 톤 · StudyCast',
   coach: '코치 톤 · StudyCast',
+  whisper: '속삭임 톤 · StudyCast',
 };
 
 const FORMAT_ALBUM: Record<AudioFormat, string> = {

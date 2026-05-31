@@ -37,17 +37,58 @@ export const Fonts = Platform.select({
     rounded: 'ui-rounded',
     /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
+    googleSansFlexThin: 'GoogleSansFlex-100',
+    googleSansFlexExtraLight: 'GoogleSansFlex-200',
+    googleSansFlexLight: 'GoogleSansFlex-300',
+    googleSansFlexRegular: 'GoogleSansFlex-400',
+    googleSansFlexMedium: 'GoogleSansFlex-500',
+    googleSansFlexSemiBold: 'GoogleSansFlex-600',
+    googleSansFlexBold: 'GoogleSansFlex-700',
+    googleSansFlexExtraBold: 'GoogleSansFlex-800',
+    googleSansFlexBlack: 'GoogleSansFlex-900',
+    pretendard: 'Pretendard',
   },
   default: {
     sans: 'normal',
     serif: 'serif',
     rounded: 'normal',
     mono: 'monospace',
+    googleSansFlexThin: 'GoogleSansFlex-100',
+    googleSansFlexExtraLight: 'GoogleSansFlex-200',
+    googleSansFlexLight: 'GoogleSansFlex-300',
+    googleSansFlexRegular: 'GoogleSansFlex-400',
+    googleSansFlexMedium: 'GoogleSansFlex-500',
+    googleSansFlexSemiBold: 'GoogleSansFlex-600',
+    googleSansFlexBold: 'GoogleSansFlex-700',
+    googleSansFlexExtraBold: 'GoogleSansFlex-800',
+    googleSansFlexBlack: 'GoogleSansFlex-900',
+    pretendard: 'Pretendard',
   },
   web: {
     sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
+    rounded:
+      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    googleSansFlexThin:
+      "GoogleSansFlex-100, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexExtraLight:
+      "GoogleSansFlex-200, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexLight:
+      "GoogleSansFlex-300, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexRegular:
+      "GoogleSansFlex-400, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexMedium:
+      "GoogleSansFlex-500, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexSemiBold:
+      "GoogleSansFlex-600, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexBold:
+      "GoogleSansFlex-700, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexExtraBold:
+      "GoogleSansFlex-800, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    googleSansFlexBlack:
+      "GoogleSansFlex-900, 'Google Sans Flex', -apple-system, BlinkMacSystemFont, sans-serif",
+    pretendard:
+      "Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
 });
