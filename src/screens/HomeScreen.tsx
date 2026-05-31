@@ -107,7 +107,6 @@ export default function HomeScreen() {
       }
       router.push('/player');
     } catch (err) {
-       
       console.error('오디오 초기화 오류:', err);
     }
   };
@@ -161,7 +160,9 @@ export default function HomeScreen() {
 
     return (
       <Pressable
-        onPress={() => handlePlayContent(item)}
+        onPress={() =>
+          router.push({ pathname: '/notebook/[id]', params: { id: item.id } })
+        }
         style={({ pressed }) => [
           styles.card,
           pressed && isDone && styles.cardPressed,
