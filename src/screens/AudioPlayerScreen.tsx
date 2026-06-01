@@ -65,7 +65,6 @@ export default function AudioPlayerScreen() {
             useNativeDriver: true,
           }).start(() => {
             router.back();
-            translateY.setValue(0);
           });
         } else {
           Animated.spring(translateY, {
