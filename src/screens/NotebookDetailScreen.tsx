@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { useContent } from '@/src/entities/content/hooks';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
-import { Fonts } from '@/src/shared/constants/theme';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 interface NotebookDetailScreenProps {
   id: string;
@@ -286,7 +286,7 @@ export default function NotebookDetailScreen({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1E6AF4" />
+        <ActivityIndicator size="large" color={Palette.primary} />
         <Text style={styles.loadingText}>노트북 정보를 불러오는 중...</Text>
       </View>
     );
@@ -296,7 +296,7 @@ export default function NotebookDetailScreen({
   if (error || !notebook) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle" size={48} color="#EF4444" />
+        <Ionicons name="alert-circle" size={48} color={Palette.error} />
         <Text style={styles.errorText}>
           노트북을 찾을 수 없거나 에러가 발생했습니다.
         </Text>
@@ -312,7 +312,7 @@ export default function NotebookDetailScreen({
     <View style={styles.listItem} key={item.id}>
       <View style={styles.listItemLeft}>
         <View style={styles.iconContainer}>
-          <Ionicons name={item.iconName} size={22} color="#1E6AF4" />
+          <Ionicons name={item.iconName} size={22} color={Palette.primary} />
         </View>
         <View style={styles.listItemTextContainer}>
           <Text style={styles.itemTitle}>{item.title}</Text>
@@ -331,7 +331,7 @@ export default function NotebookDetailScreen({
         <Ionicons
           name="play"
           size={16}
-          color="#1E6AF4"
+          color={Palette.primary}
           style={{ marginLeft: 2 }}
         />
       </Pressable>
@@ -343,7 +343,7 @@ export default function NotebookDetailScreen({
     <View style={styles.listItem} key={item.id}>
       <View style={styles.listItemLeft}>
         <View style={styles.fileIconContainer}>
-          <Ionicons name="document-text" size={22} color="#1E6AF4" />
+          <Ionicons name="document-text" size={22} color={Palette.primary} />
         </View>
         <View style={styles.listItemTextContainer}>
           <Text style={styles.itemTitle} numberOfLines={1}>
@@ -359,7 +359,7 @@ export default function NotebookDetailScreen({
           pressed && styles.circlePressed,
         ]}
       >
-        <Ionicons name="close" size={16} color="#64748B" />
+        <Ionicons name="close" size={16} color={Palette.textSecondary} />
       </Pressable>
     </View>
   );
@@ -368,7 +368,7 @@ export default function NotebookDetailScreen({
     <SafeAreaView style={styles.container}>
       {/* Background FigmaSoft Blue Gradient */}
       <LinearGradient
-        colors={['#EBF2FE', '#FDFDFD']}
+        colors={[Palette.primaryLight, Palette.bgPage]}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -381,7 +381,7 @@ export default function NotebookDetailScreen({
             pressed && styles.backButtonPressed,
           ]}
         >
-          <Ionicons name="chevron-back" size={24} color="#100C08" />
+          <Ionicons name="chevron-back" size={24} color={Palette.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {notebook.title.replace(/\s*\(AI.*?\)\s*/g, '')}
@@ -481,7 +481,7 @@ export default function NotebookDetailScreen({
           >
             {isAddingFile ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={Palette.bgCard} />
                 <Text style={styles.ctaButtonText}>파일 업로드 중...</Text>
               </View>
             ) : (
@@ -497,43 +497,43 @@ export default function NotebookDetailScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     gap: 12,
   },
   loadingText: {
     fontSize: 14,
-    color: '#64748B',
+    color: Palette.textSecondary,
     fontFamily: Fonts.pretendardRegular,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     padding: 24,
     gap: 16,
   },
   errorText: {
     fontSize: 16,
-    color: '#1E293B',
+    color: Palette.textErrorSlate,
     fontFamily: Fonts.pretendardMedium,
     textAlign: 'center',
   },
   backButtonAction: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   backButtonActionText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Palette.bgCard,
     fontFamily: Fonts.pretendardMedium,
   },
   header: {
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
     flex: 1,
   },
@@ -580,20 +580,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabButtonActive: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
   },
   tabButtonInactive: {
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   tabText: {
     fontSize: 13,
     fontFamily: Fonts.pretendardMedium,
   },
   tabTextActive: {
-    color: '#FDFDFD',
+    color: Palette.bgPage,
   },
   tabTextInactive: {
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
   },
   listContainer: {
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 6,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 6,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -635,12 +635,12 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardMedium,
   },
   itemSubtitle: {
     fontSize: 13,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#100C08',
+    backgroundColor: Palette.textPrimary,
     opacity: 0.1,
     marginVertical: 4,
   },
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     right: 24,
   },
   ctaButton: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -690,13 +690,13 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   ctaButtonDisabled: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: Palette.textMuted,
     shadowOpacity: 0,
     elevation: 0,
   },
   ctaButtonText: {
     fontSize: 15,
-    color: '#FDFDFD',
+    color: Palette.bgPage,
     fontFamily: Fonts.pretendardMedium,
   },
   loadingRow: {

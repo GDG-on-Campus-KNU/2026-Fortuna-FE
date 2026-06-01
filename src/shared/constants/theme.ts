@@ -27,6 +27,63 @@ export const Colors = {
   },
 };
 
+export const Palette = {
+  // Brand Blue
+  primary: '#1E6AF4',
+  primaryDark: '#0C46B4',
+  primaryLight: '#EBF2FE',
+  primaryHover: 'rgba(30, 106, 244, 0.08)',
+  primaryMuted: 'rgba(30, 106, 244, 0.03)',
+  primarySubtle: 'rgba(30, 106, 244, 0.01)',
+  primaryBorder: 'rgba(30, 106, 244, 0.12)',
+  primaryFill: 'rgba(30, 106, 244, 0.06)',
+  primaryDisabled: 'rgba(30, 106, 244, 0.15)',
+
+  // Neutrals / Typography
+  textPrimary: '#100C08',
+  textSecondary: '#64748B',
+  textMuted: '#94A3B8',
+  textPlaceholder: 'rgba(16, 12, 8, 0.3)',
+  textOpMuted: 'rgba(16, 12, 8, 0.5)',
+  textDarkSlate: '#0F172A',
+  textErrorSlate: '#1E293B',
+
+  // Backgrounds & Containers
+  bgPage: '#FDFDFD',
+  bgCard: '#FFFFFF',
+  bgControl: 'rgba(16, 12, 8, 0.08)',
+  bgAlt: '#F1F5F9',
+
+  // Borders & Dividers
+  border: '#E2E8F0',
+  borderDark: 'rgba(16, 12, 8, 0.1)',
+  borderLight: '#F8FAFC',
+  borderMedium: '#D1D5DB',
+  borderSeparator: 'rgba(16, 12, 8, 0.15)',
+
+  // Feedback
+  success: '#10B981',
+  error: '#EF4444',
+  errorDark: '#DC2626',
+  warning: '#F59E0B',
+  warningDark: '#D97706',
+  disabled: '#CBD5E1',
+
+  // Formats (HomeScreen details)
+  formatDialog: '#3B82F6',
+  formatDialogBg: '#EFF6FF',
+  formatQuiz: '#10B981',
+  formatQuizBg: '#ECFDF5',
+  formatStory: '#8B5CF6',
+  formatStoryBg: '#F5F3FF',
+  formatOther: '#6B7280',
+  formatOtherBg: '#F3F4F6',
+
+  // Overlays & Shadows
+  overlay: 'rgba(0, 0, 0, 0.4)',
+  shadow: '#000000',
+};
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

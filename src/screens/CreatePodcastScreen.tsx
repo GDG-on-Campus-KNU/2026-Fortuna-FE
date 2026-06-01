@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Alert,
   Animated,
-  Easing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,7 +19,7 @@ import type {
   TtsVoice,
 } from '@/src/entities/content/model';
 import { contentRepository } from '@/src/entities/content/repository';
-import { Fonts } from '@/src/shared/constants/theme';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 const RECOMMENDATIONS = [
   '알고리즘 기말고사 대비',
@@ -177,7 +176,7 @@ export default function CreatePodcastScreen() {
         <View style={styles.checklistItem}>
           <View style={circleBoxStyle}>
             {isComplete ? (
-              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              <Ionicons name="checkmark" size={20} color={Palette.bgCard} />
             ) : (
               <Text style={circleTextStyle}>{itemStep}</Text>
             )}
@@ -204,32 +203,32 @@ export default function CreatePodcastScreen() {
     switch (loadingStage) {
       case 1:
         return {
-          borderTopColor: '#1E6AF4',
-          borderRightColor: 'rgba(30, 106, 244, 0.08)',
-          borderBottomColor: 'rgba(30, 106, 244, 0.08)',
-          borderLeftColor: 'rgba(30, 106, 244, 0.08)',
+          borderTopColor: Palette.primary,
+          borderRightColor: Palette.primaryHover,
+          borderBottomColor: Palette.primaryHover,
+          borderLeftColor: Palette.primaryHover,
           percentage: '25%',
         };
       case 2:
         return {
-          borderTopColor: '#1E6AF4',
-          borderRightColor: '#1E6AF4',
-          borderBottomColor: 'rgba(30, 106, 244, 0.08)',
-          borderLeftColor: 'rgba(30, 106, 244, 0.08)',
+          borderTopColor: Palette.primary,
+          borderRightColor: Palette.primary,
+          borderBottomColor: Palette.primaryHover,
+          borderLeftColor: Palette.primaryHover,
           percentage: '50%',
         };
       case 3:
         return {
-          borderTopColor: '#1E6AF4',
-          borderRightColor: '#1E6AF4',
-          borderBottomColor: '#1E6AF4',
-          borderLeftColor: 'rgba(30, 106, 244, 0.08)',
+          borderTopColor: Palette.primary,
+          borderRightColor: Palette.primary,
+          borderBottomColor: Palette.primary,
+          borderLeftColor: Palette.primaryHover,
           percentage: '75%',
         };
       case 4:
       default:
         return {
-          borderColor: '#1E6AF4',
+          borderColor: Palette.primary,
           percentage: '100%',
         };
     }
@@ -250,7 +249,11 @@ export default function CreatePodcastScreen() {
                 pressed && styles.actionPressed,
               ]}
             >
-              <Ionicons name="chevron-back" size={24} color="#100C08" />
+              <Ionicons
+                name="chevron-back"
+                size={24}
+                color={Palette.textPrimary}
+              />
             </Pressable>
 
             <View style={styles.progressContainer}>
@@ -297,7 +300,7 @@ export default function CreatePodcastScreen() {
                     <TextInput
                       style={styles.textInput}
                       placeholder="주제를 입력해 주세요"
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={Palette.textMuted}
                       value={topic}
                       onChangeText={setTopic}
                       autoCapitalize="none"
@@ -311,7 +314,7 @@ export default function CreatePodcastScreen() {
                         <Ionicons
                           name="close-circle"
                           size={18}
-                          color="#94A3B8"
+                          color={Palette.textMuted}
                         />
                       </Pressable>
                     )}
@@ -593,7 +596,7 @@ export default function CreatePodcastScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   headerBar: {
     flexDirection: 'row',
@@ -626,11 +629,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 9999,
-    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+    backgroundColor: Palette.primaryHover,
   },
   progressDotActive: {
     width: 24,
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
   },
   scrollContainer: {
     paddingHorizontal: 24,
@@ -649,13 +652,13 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontSize: 24,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
     lineHeight: 32,
   },
   subtitleText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
     marginTop: 6,
@@ -663,21 +666,21 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 106, 244, 0.01)',
+    backgroundColor: Palette.primarySubtle,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: Palette.border,
     borderRadius: 16,
     paddingHorizontal: 16,
     height: 56,
   },
   inputWrapperFilled: {
-    borderColor: '#1E6AF4',
-    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    borderColor: Palette.primary,
+    backgroundColor: Palette.primaryMuted,
   },
   textInput: {
     flex: 1,
     height: '100%',
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontSize: 15,
     fontFamily: Fonts.pretendardMedium,
   },
@@ -689,12 +692,12 @@ const styles = StyleSheet.create({
   },
   recommendTitle: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardMedium,
     marginBottom: 12,
   },
   recommendChip: {
-    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    backgroundColor: Palette.primaryMuted,
     borderRadius: 9999,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -704,45 +707,45 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   recommendChipSelected: {
-    borderColor: '#1E6AF4',
-    backgroundColor: 'rgba(30, 106, 244, 0.08)',
+    borderColor: Palette.primary,
+    backgroundColor: Palette.primaryHover,
   },
   recommendChipText: {
     fontSize: 14,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
   },
   recommendChipTextSelected: {
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontFamily: Fonts.pretendardMedium,
   },
   optionsList: {
     gap: 12,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.bgCard,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: Palette.border,
     borderRadius: 16,
     padding: 17,
     gap: 4,
   },
   cardSelected: {
-    backgroundColor: 'rgba(30, 106, 244, 0.03)',
-    borderColor: '#1E6AF4',
+    backgroundColor: Palette.primaryMuted,
+    borderColor: Palette.primary,
   },
   cardTitle: {
     fontSize: 16,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardMedium,
   },
   cardTitleSelected: {
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontFamily: Fonts.pretendardBold,
   },
   cardDesc: {
     fontSize: 13,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
     lineHeight: 18,
@@ -755,10 +758,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 28,
     paddingTop: 12,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   primaryButton: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     borderRadius: 16,
     height: 56,
     alignItems: 'center',
@@ -769,14 +772,14 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   primaryButtonDisabled: {
-    backgroundColor: 'rgba(30, 106, 244, 0.15)',
+    backgroundColor: Palette.primaryDisabled,
     shadowOpacity: 0,
     elevation: 0,
   },
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Palette.bgCard,
     fontFamily: Fonts.pretendardBold,
   },
   step5Container: {
@@ -806,24 +809,24 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    backgroundColor: Palette.primaryMuted,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressPercentage: {
     fontSize: 28,
     fontFamily: Fonts.googleSansFlexBold,
-    color: '#1E6AF4',
+    color: Palette.primary,
   },
   generatingTitle: {
     fontSize: 20,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
     textAlign: 'center',
   },
   generatingSubtitle: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
     textAlign: 'center',
@@ -849,28 +852,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   circleIconActive: {
-    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+    backgroundColor: Palette.primaryHover,
     borderWidth: 2,
-    borderColor: '#1E6AF4',
+    borderColor: Palette.primary,
   },
   circleIconComplete: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
   },
   circleIconWaiting: {
-    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+    backgroundColor: Palette.primaryHover,
   },
   circleTextActive: {
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontSize: 15,
     fontFamily: Fonts.googleSansFlexMedium,
   },
   circleTextComplete: {
-    color: '#FFFFFF',
+    color: Palette.bgCard,
     fontSize: 15,
     fontFamily: Fonts.googleSansFlexMedium,
   },
   circleTextWaiting: {
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontSize: 15,
     fontFamily: Fonts.googleSansFlexMedium,
@@ -883,10 +886,10 @@ const styles = StyleSheet.create({
   checklistTitle: {
     fontSize: 15,
     fontFamily: Fonts.pretendardMedium,
-    color: '#100C08',
+    color: Palette.textPrimary,
   },
   checklistTitleWaiting: {
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
   },
   checklistStatus: {
@@ -894,22 +897,22 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.pretendardRegular,
   },
   checklistStatusActive: {
-    color: '#1E6AF4',
+    color: Palette.primary,
   },
   checklistStatusComplete: {
-    color: '#1E6AF4',
+    color: Palette.primary,
   },
   checklistStatusWaiting: {
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
   },
   verticalLine: {
     width: 2,
     height: 32,
-    backgroundColor: 'rgba(30, 106, 244, 0.1)',
+    backgroundColor: Palette.primaryHover,
     marginLeft: 21,
   },
   verticalLineComplete: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
   },
 });

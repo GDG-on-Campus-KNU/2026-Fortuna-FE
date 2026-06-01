@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Fonts } from '@/src/shared/constants/theme';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 export default function SignUpScreen() {
   // 화면 모드: 'landing' (소셜/이메일 선택) | 'email' (이메일 상세 정보 입력)
@@ -120,7 +120,7 @@ export default function SignUpScreen() {
       {/* 백그라운드 피그마 소프트 블루 그라데이션 - 랜딩 화면에서만 노출 */}
       {signUpMode === 'landing' && (
         <LinearGradient
-          colors={['#EBF2FE', '#FDFDFD']}
+          colors={[Palette.primaryLight, Palette.bgPage]}
           locations={[0.40389, 0.50361]}
           style={StyleSheet.absoluteFillObject}
         />
@@ -141,7 +141,7 @@ export default function SignUpScreen() {
               {/* 상단 로고 영역 */}
               <View style={styles.logoSection}>
                 <View style={styles.appIconBadge}>
-                  <Ionicons name="school" size={32} color="#FFFFFF" />
+                  <Ionicons name="school" size={32} color={Palette.bgCard} />
                 </View>
                 <Text style={styles.brandTitle}>Studycast</Text>
               </View>
@@ -196,7 +196,7 @@ export default function SignUpScreen() {
                         <Ionicons
                           name="mail-outline"
                           size={18}
-                          color="#100C08"
+                          color={Palette.textPrimary}
                         />
                       </View>
                       <Text style={styles.socialButtonText}>
@@ -210,7 +210,7 @@ export default function SignUpScreen() {
                 {isSubmitting && (
                   <ActivityIndicator
                     size="small"
-                    color="#1E6AF4"
+                    color={Palette.primary}
                     style={styles.landingLoader}
                   />
                 )}
@@ -245,7 +245,11 @@ export default function SignUpScreen() {
                     pressed && styles.actionPressed,
                   ]}
                 >
-                  <Ionicons name="chevron-back" size={24} color="#100C08" />
+                  <Ionicons
+                    name="chevron-back"
+                    size={24}
+                    color={Palette.textPrimary}
+                  />
                 </Pressable>
               </View>
 
@@ -275,7 +279,7 @@ export default function SignUpScreen() {
                     <TextInput
                       style={styles.textInput}
                       placeholder="example@email.com"
-                      placeholderTextColor="rgba(16, 12, 8, 0.3)"
+                      placeholderTextColor={Palette.textPlaceholder}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -307,7 +311,7 @@ export default function SignUpScreen() {
                     <TextInput
                       style={styles.textInput}
                       placeholder="••••••••"
-                      placeholderTextColor="rgba(16, 12, 8, 0.3)"
+                      placeholderTextColor={Palette.textPlaceholder}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -323,7 +327,7 @@ export default function SignUpScreen() {
                       <Ionicons
                         name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                         size={20}
-                        color="#100C08"
+                        color={Palette.textPrimary}
                         style={{ opacity: 0.5 }}
                       />
                     </Pressable>
@@ -351,7 +355,7 @@ export default function SignUpScreen() {
                     <TextInput
                       style={styles.textInput}
                       placeholder="••••••••"
-                      placeholderTextColor="rgba(16, 12, 8, 0.3)"
+                      placeholderTextColor={Palette.textPlaceholder}
                       secureTextEntry={!showConfirmPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -373,7 +377,7 @@ export default function SignUpScreen() {
                             : 'eye-outline'
                         }
                         size={20}
-                        color="#100C08"
+                        color={Palette.textPrimary}
                         style={{ opacity: 0.5 }}
                       />
                     </Pressable>
@@ -407,7 +411,7 @@ export default function SignUpScreen() {
                           <Ionicons
                             name="checkmark"
                             size={12}
-                            color="#FFFFFF"
+                            color={Palette.bgCard}
                           />
                         )}
                       </View>
@@ -434,7 +438,7 @@ export default function SignUpScreen() {
                           <Ionicons
                             name="checkmark"
                             size={12}
-                            color="#FFFFFF"
+                            color={Palette.bgCard}
                           />
                         )}
                       </View>
@@ -458,7 +462,7 @@ export default function SignUpScreen() {
                   ]}
                 >
                   {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={Palette.bgCard} />
                   ) : (
                     <Text style={styles.signUpButtonText}>계정 생성하기</Text>
                   )}
@@ -475,7 +479,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   gradientHeaderBg: {
     position: 'absolute',
@@ -483,7 +487,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '35%',
-    backgroundColor: '#EBF2FE',
+    backgroundColor: Palette.primaryLight,
   },
   keyboardView: {
     flex: 1,
@@ -510,10 +514,10 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1E6AF4',
+    shadowColor: Palette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -521,8 +525,7 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     fontSize: 40,
-    // fontWeight: '800',
-    color: '#100C08',
+    color: Palette.textPrimary,
     marginTop: 10,
     fontFamily: Fonts.googleSansFlexBold,
     letterSpacing: -0.5,
@@ -538,13 +541,13 @@ const styles = StyleSheet.create({
   landingTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#100C08',
+    color: Palette.textPrimary,
     marginBottom: 8,
     fontFamily: Fonts.pretendardExtraBold,
   },
   landingSubtitle: {
     fontSize: 15,
-    color: '#64748B',
+    color: Palette.textSecondary,
     fontFamily: Fonts.pretendardRegular,
   },
   socialBtnGroup: {
@@ -552,9 +555,9 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.bgCard,
     borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderColor: Palette.borderDark,
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -581,7 +584,7 @@ const styles = StyleSheet.create({
   },
   socialButtonText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
   },
   landingLoader: {
@@ -595,12 +598,12 @@ const styles = StyleSheet.create({
   },
   landingFooterText: {
     fontSize: 15,
-    color: 'rgba(16, 12, 8, 0.5)',
+    color: Palette.textOpMuted,
     fontFamily: Fonts.pretendardRegular,
   },
   landingFooterLink: {
     fontSize: 15,
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontFamily: Fonts.pretendardRegular,
   },
   /* ========================================================
@@ -608,14 +611,14 @@ const styles = StyleSheet.create({
      ======================================================== */
   formContainer: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     height: 56,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   backButton: {
     width: 40,
@@ -627,7 +630,7 @@ const styles = StyleSheet.create({
   headerBarTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: Palette.textDarkSlate,
     fontFamily: Fonts.pretendardBold,
   },
   headerBarPlaceholder: {
@@ -645,12 +648,12 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
   },
   subtitleText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
@@ -659,7 +662,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     marginBottom: 4,
     fontFamily: Fonts.pretendardRegular,
   },
@@ -667,20 +670,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
-    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    backgroundColor: Palette.primaryMuted,
     borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderColor: Palette.borderDark,
     borderRadius: 16,
     paddingHorizontal: 16,
   },
   inputWrapperFocused: {
-    borderColor: '#1E6AF4',
+    borderColor: Palette.primary,
   },
   inputWrapperError: {
-    borderColor: '#EF4444',
+    borderColor: Palette.error,
   },
   inputWrapperSuccess: {
-    borderColor: '#10B981',
+    borderColor: Palette.success,
   },
   inputIcon: {
     marginRight: 12,
@@ -688,7 +691,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
     height: '100%',
   },
@@ -697,36 +700,36 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: Palette.error,
     marginTop: 6,
     fontWeight: '600',
     fontFamily: Fonts.pretendardSemiBold,
   },
   successText: {
     fontSize: 12,
-    color: '#10B981',
+    color: Palette.success,
     marginTop: 6,
     fontWeight: '600',
     fontFamily: Fonts.pretendardSemiBold,
   },
   helperText: {
     fontSize: 12,
-    color: '#64748B',
+    color: Palette.textSecondary,
     marginTop: 6,
     lineHeight: 16,
     fontFamily: Fonts.pretendardRegular,
   },
   helperTextError: {
-    color: '#EF4444',
+    color: Palette.error,
     fontWeight: '600',
   },
   helperTextSuccess: {
-    color: '#10B981',
+    color: Palette.success,
     fontWeight: '600',
   },
   termsContainer: {
     borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderColor: Palette.borderDark,
     borderRadius: 16,
     padding: 16,
     gap: 16,
@@ -742,24 +745,24 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderColor: Palette.borderDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   customCircleCheckboxChecked: {
-    backgroundColor: '#1E6AF4',
-    borderColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
+    borderColor: Palette.primary,
   },
   termLabel: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
   },
   actionPressed: {
     opacity: 0.7,
   },
   signUpButton: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
@@ -770,11 +773,11 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   signUpButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Palette.disabled,
   },
   signUpButtonText: {
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Palette.bgCard,
     fontFamily: Fonts.pretendardMedium,
   },
   bottomLinkContainer: {
@@ -786,19 +789,19 @@ const styles = StyleSheet.create({
   },
   bottomInfoText: {
     fontSize: 13,
-    color: '#64748B',
+    color: Palette.textSecondary,
     fontFamily: Fonts.pretendardRegular,
   },
   bottomLinkText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontFamily: Fonts.pretendardBold,
   },
   bottomButtonSection: {
     paddingHorizontal: 24,
     paddingBottom: Platform.OS === 'ios' ? 20 : 24,
     paddingTop: 12,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
 });

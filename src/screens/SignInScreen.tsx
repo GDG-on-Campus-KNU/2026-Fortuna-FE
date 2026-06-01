@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Fonts } from '@/src/shared/constants/theme';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -71,7 +71,7 @@ export default function SignInScreen() {
     <SafeAreaView style={styles.container}>
       {/* 백그라운드 피그마 소프트 블루 그라데이션 */}
       <LinearGradient
-        colors={['#EBF2FE', '#FDFDFD']}
+        colors={[Palette.primaryLight, Palette.bgPage]}
         locations={[0.20445, 0.29875]}
         style={StyleSheet.absoluteFillObject}
       />
@@ -88,7 +88,7 @@ export default function SignInScreen() {
           {/* 상단 로고 영역 */}
           <View style={styles.logoSection}>
             <View style={styles.appIconBadge}>
-              <Ionicons name="school" size={32} color="#FFFFFF" />
+              <Ionicons name="school" size={32} color={Palette.bgCard} />
             </View>
             <Text style={styles.brandTitle}>Studycast</Text>
           </View>
@@ -114,7 +114,7 @@ export default function SignInScreen() {
                 <TextInput
                   style={styles.textInput}
                   placeholder="example@email.com"
-                  placeholderTextColor="rgba(16, 12, 8, 0.3)"
+                  placeholderTextColor={Palette.textPlaceholder}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -127,7 +127,7 @@ export default function SignInScreen() {
                   <Ionicons
                     name={isEmailValid ? 'checkmark-circle' : 'alert-circle'}
                     size={20}
-                    color={isEmailValid ? '#10B981' : '#EF4444'}
+                    color={isEmailValid ? Palette.success : Palette.error}
                   />
                 )}
               </View>
@@ -145,7 +145,7 @@ export default function SignInScreen() {
                 <TextInput
                   style={styles.textInput}
                   placeholder="••••••••"
-                  placeholderTextColor="rgba(16, 12, 8, 0.3)"
+                  placeholderTextColor={Palette.textPlaceholder}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -161,7 +161,7 @@ export default function SignInScreen() {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="rgba(16, 12, 8, 0.5)"
+                    color={Palette.textOpMuted}
                   />
                 </Pressable>
               </View>
@@ -189,7 +189,7 @@ export default function SignInScreen() {
             ]}
           >
             {isSubmitting ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={Palette.bgCard} />
             ) : (
               <Text style={styles.signInButtonText}>로그인</Text>
             )}
@@ -245,7 +245,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   keyboardView: {
     flex: 1,
@@ -266,10 +266,10 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1E6AF4',
+    shadowColor: Palette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -277,10 +277,9 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     fontSize: 40,
-    color: '#100C08',
+    color: Palette.textPrimary,
     marginTop: 10,
     fontFamily: Fonts.googleSansFlexBold,
-    // fontWeight: 'bold',
     letterSpacing: -0.5,
   },
   titleSection: {
@@ -291,12 +290,12 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
   },
   subtitleText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
@@ -309,30 +308,30 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 56,
-    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    backgroundColor: Palette.primaryMuted,
     borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderColor: Palette.borderDark,
     borderRadius: 16,
     paddingHorizontal: 16,
   },
   inputWrapperFocused: {
-    borderColor: '#1E6AF4',
-    backgroundColor: 'rgba(30, 106, 244, 0.05)',
+    borderColor: Palette.primary,
+    backgroundColor: Palette.primaryHover,
   },
   inputWrapperError: {
-    borderColor: '#EF4444',
+    borderColor: Palette.error,
   },
   textInput: {
     flex: 1,
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
     height: '100%',
   },
@@ -345,20 +344,20 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 13,
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontFamily: Fonts.pretendardRegular,
   },
   actionPressed: {
     opacity: 0.7,
   },
   signInButton: {
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
-    shadowColor: '#1E6AF4',
+    shadowColor: Palette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -369,14 +368,14 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   signInButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Palette.disabled,
     shadowOpacity: 0,
     elevation: 0,
   },
   signInButtonText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#FDFDFD',
+    color: Palette.bgPage,
     fontFamily: Fonts.pretendardMedium,
   },
   dividerContainer: {
@@ -389,20 +388,20 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#100C08',
+    backgroundColor: Palette.textPrimary,
     opacity: 0.1,
   },
   dividerText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     marginHorizontal: 10,
     fontFamily: Fonts.pretendardRegular,
   },
   googleButton: {
     height: 56,
     borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.1)',
-    backgroundColor: '#FFFFFF',
+    borderColor: Palette.borderDark,
+    backgroundColor: Palette.bgCard,
     borderRadius: 16,
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -425,7 +424,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
   },
   signUpLinkContainer: {
@@ -436,7 +435,7 @@ const styles = StyleSheet.create({
   },
   signUpLinkText: {
     fontSize: 15,
-    color: '#1E6AF4',
+    color: Palette.primary,
     fontFamily: Fonts.pretendardRegular,
   },
 });

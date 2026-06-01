@@ -24,7 +24,7 @@ import type {
   TtsVoice,
 } from '@/src/entities/content/model';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
-import { Fonts } from '@/src/shared/constants/theme';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 12;
@@ -46,29 +46,29 @@ export default function HomeScreen() {
         return {
           label: '대화형',
           icon: 'people-outline' as const,
-          color: '#3B82F6',
-          bg: '#EFF6FF',
+          color: Palette.formatDialog,
+          bg: Palette.formatDialogBg,
         };
       case 'quiz':
         return {
           label: '퀴즈형',
           icon: 'help-circle-outline' as const,
-          color: '#10B981',
-          bg: '#ECFDF5',
+          color: Palette.formatQuiz,
+          bg: Palette.formatQuizBg,
         };
       case 'story':
         return {
           label: '스토리',
           icon: 'book-outline' as const,
-          color: '#8B5CF6',
-          bg: '#F5F3FF',
+          color: Palette.formatStory,
+          bg: Palette.formatStoryBg,
         };
       default:
         return {
           label: '기타',
           icon: 'document-text-outline' as const,
-          color: '#6B7280',
-          bg: '#F3F4F6',
+          color: Palette.formatOther,
+          bg: Palette.formatOtherBg,
         };
     }
   };
@@ -146,7 +146,7 @@ export default function HomeScreen() {
             <Ionicons
               name="add"
               size={24}
-              color="#100C08"
+              color={Palette.textPrimary}
               style={{ opacity: 0.9 }}
             />
           </View>
@@ -173,7 +173,7 @@ export default function HomeScreen() {
         disabled={!isDone}
       >
         <View style={styles.notebookIconBg}>
-          <Ionicons name="bulb" size={32} color="#1E6AF4" />
+          <Ionicons name="bulb" size={32} color={Palette.primary} />
         </View>
 
         <View style={styles.notebookTextContainer}>
@@ -185,7 +185,7 @@ export default function HomeScreen() {
             <View style={styles.statusRow}>
               <ActivityIndicator
                 size="small"
-                color="#F59E0B"
+                color={Palette.warning}
                 style={styles.spinner}
               />
               <Text style={styles.statusTextGenerating}>생성 중</Text>
@@ -194,7 +194,7 @@ export default function HomeScreen() {
             <Text style={styles.notebookDate}>{mockDate}</Text>
           ) : (
             <View style={styles.statusRow}>
-              <Ionicons name="alert-circle" size={14} color="#EF4444" />
+              <Ionicons name="alert-circle" size={14} color={Palette.error} />
               <Text style={styles.statusTextFailed}>실패</Text>
             </View>
           )}
@@ -213,7 +213,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* 백그라운드 피그마 소프트 블루 그라데이션 */}
       <LinearGradient
-        colors={['#EBF2FE', '#FDFDFD']}
+        colors={[Palette.primaryLight, Palette.bgPage]}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -254,7 +254,7 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={loading && (contents || []).length > 0}
               onRefresh={refresh}
-              colors={['#1E6AF4']}
+              colors={[Palette.primary]}
               progressViewOffset={insets.top + 108} // pull-to-refresh spinner sits below header
             />
           }
@@ -279,7 +279,7 @@ export default function HomeScreen() {
             pressed && styles.buttonPressed,
           ]}
         >
-          <Ionicons name="person" size={22} color="#100C08" />
+          <Ionicons name="person" size={22} color={Palette.textPrimary} />
         </Pressable>
       </View>
 
@@ -305,7 +305,7 @@ export default function HomeScreen() {
           <View style={styles.nowPlayingBarContent}>
             <View style={styles.nowPlayingLeft}>
               <View style={styles.nowPlayingThumb}>
-                <Ionicons name="bulb" size={20} color="#1E6AF4" />
+                <Ionicons name="bulb" size={20} color={Palette.primary} />
               </View>
               <View style={styles.nowPlayingInfo}>
                 <Text style={styles.nowPlayingLabel}>현재 재생 중</Text>
@@ -324,7 +324,7 @@ export default function HomeScreen() {
               <Ionicons
                 name={playbackState === 'playing' ? 'pause' : 'play'}
                 size={24}
-                color="#1E6AF4"
+                color={Palette.primary}
               />
             </Pressable>
           </View>
@@ -337,7 +337,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
   },
   header: {
     position: 'absolute',
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 40,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.googleSansFlexBold,
     letterSpacing: -0.5,
   },
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(16, 12, 8, 0.08)',
+    backgroundColor: Palette.bgControl,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     marginBottom: CARD_MARGIN,
   },
   card: {
-    backgroundColor: 'rgba(30, 106, 244, 0.05)',
+    backgroundColor: Palette.primaryHover,
     width: CARD_SIZE,
     height: CARD_SIZE,
     borderRadius: 32,
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   },
   cardPressed: {
     transform: [{ scale: 0.98 }],
-    backgroundColor: 'rgba(30, 106, 244, 0.08)',
+    backgroundColor: Palette.primaryHover,
   },
   cardDisabled: {
     opacity: 0.8,
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   addCardText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.9,
     fontFamily: Fonts.pretendardMedium,
     textAlign: 'center',
@@ -430,13 +430,13 @@ const styles = StyleSheet.create({
   notebookTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardSemiBold,
     lineHeight: 20,
   },
   notebookDate: {
     fontSize: 13,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
@@ -451,13 +451,13 @@ const styles = StyleSheet.create({
   statusTextGenerating: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#D97706',
+    color: Palette.warningDark,
     fontFamily: Fonts.pretendardBold,
   },
   statusTextFailed: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#DC2626',
+    color: Palette.errorDark,
     fontFamily: Fonts.pretendardBold,
   },
   nowPlayingBarContainer: {
@@ -468,14 +468,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(30, 106, 244, 0.12)',
+    borderColor: Palette.primaryBorder,
   },
   nowPlayingBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    backgroundColor: 'rgba(30, 106, 244, 0.06)',
+    backgroundColor: Palette.primaryFill,
   },
   nowPlayingBarPressed: {
     opacity: 0.85,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.bgCard,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -500,14 +500,14 @@ const styles = StyleSheet.create({
   },
   nowPlayingLabel: {
     fontSize: 13,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
   nowPlayingTitle: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardMedium,
   },
   playButton: {

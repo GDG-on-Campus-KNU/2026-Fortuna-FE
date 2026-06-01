@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PLAYBACK_RATES, useAudioStore } from '@/src/features/audio';
-import { Fonts } from '@/src/shared/constants/theme';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 export default function AudioPlayerScreen() {
   const {
@@ -94,7 +94,7 @@ export default function AudioPlayerScreen() {
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              backgroundColor: Palette.overlay,
               opacity: backdropOpacity,
             },
           ]}
@@ -113,7 +113,11 @@ export default function AudioPlayerScreen() {
             </View>
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconBg}>
-                <Ionicons name="disc-outline" size={54} color="#1E6AF4" />
+                <Ionicons
+                  name="disc-outline"
+                  size={54}
+                  color={Palette.primary}
+                />
               </View>
               <Text style={styles.emptyTitle}>
                 재생 중인 학습 캐스트가 없습니다
@@ -132,7 +136,7 @@ export default function AudioPlayerScreen() {
                 <Ionicons
                   name="home-outline"
                   size={18}
-                  color="#FFFFFF"
+                  color={Palette.bgCard}
                   style={{ marginRight: 6 }}
                 />
                 <Text style={styles.emptyButtonText}>보관함으로 이동하기</Text>
@@ -185,7 +189,7 @@ export default function AudioPlayerScreen() {
         style={[
           StyleSheet.absoluteFill,
           {
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backgroundColor: Palette.overlay,
             opacity: backdropOpacity,
           },
         ]}
@@ -215,7 +219,11 @@ export default function AudioPlayerScreen() {
                 pressed && styles.controlPressed,
               ]}
             >
-              <Ionicons name="ellipsis-horizontal" size={24} color="#100C08" />
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={24}
+                color={Palette.textPrimary}
+              />
             </Pressable>
           </View>
 
@@ -276,7 +284,7 @@ export default function AudioPlayerScreen() {
               <Ionicons
                 name="shuffle"
                 size={24}
-                color={isShuffle ? '#1E6AF4' : '#100C08'}
+                color={isShuffle ? Palette.primary : Palette.textPrimary}
               />
             </Pressable>
 
@@ -290,7 +298,7 @@ export default function AudioPlayerScreen() {
               <MaterialIcons
                 name={'replay-10' as any}
                 size={24}
-                color="#100C08"
+                color={Palette.textPrimary}
               />
             </Pressable>
 
@@ -303,12 +311,12 @@ export default function AudioPlayerScreen() {
               ]}
             >
               {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={Palette.bgCard} size="small" />
               ) : (
                 <Ionicons
                   name={isPlaying ? 'pause' : 'play'}
                   size={28}
-                  color="#FFFFFF"
+                  color={Palette.bgCard}
                   style={isPlaying ? null : styles.playIconOffset}
                 />
               )}
@@ -324,7 +332,7 @@ export default function AudioPlayerScreen() {
               <MaterialIcons
                 name={'forward-10' as any}
                 size={24}
-                color="#100C08"
+                color={Palette.textPrimary}
               />
             </Pressable>
 
@@ -338,7 +346,7 @@ export default function AudioPlayerScreen() {
               <Ionicons
                 name="repeat"
                 size={24}
-                color={isRepeat ? '#1E6AF4' : '#100C08'}
+                color={isRepeat ? Palette.primary : Palette.textPrimary}
               />
             </Pressable>
           </View>
@@ -415,7 +423,7 @@ const styles = StyleSheet.create({
   },
   animatedContainer: {
     flex: 1,
-    backgroundColor: '#EBF2FE',
+    backgroundColor: Palette.primaryLight,
     overflow: 'hidden',
   },
   dragHandleContainer: {
@@ -427,7 +435,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: 'rgba(16, 12, 8, 0.15)',
+    backgroundColor: Palette.borderSeparator,
   },
   header: {
     flexDirection: 'row',
@@ -443,13 +451,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
     lineHeight: 34,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
     marginTop: 6,
@@ -463,7 +471,7 @@ const styles = StyleSheet.create({
   },
   transcriptCard: {
     flex: 1,
-    backgroundColor: '#FDFDFD',
+    backgroundColor: Palette.bgPage,
     borderRadius: 16,
     marginHorizontal: 24,
     marginVertical: 8,
@@ -475,7 +483,7 @@ const styles = StyleSheet.create({
   transcriptText: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardRegular,
   },
   sliderContainer: {
@@ -491,13 +499,13 @@ const styles = StyleSheet.create({
   },
   timeValue: {
     fontSize: 13,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
   sliderTrack: {
     height: 4,
-    backgroundColor: 'rgba(16, 12, 8, 0.1)',
+    backgroundColor: Palette.borderDark,
     borderRadius: 9999,
     width: '100%',
     position: 'relative',
@@ -505,7 +513,7 @@ const styles = StyleSheet.create({
   },
   sliderFill: {
     height: '100%',
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     borderRadius: 9999,
     position: 'absolute',
   },
@@ -514,9 +522,9 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.bgCard,
     borderWidth: 4,
-    borderColor: '#1E6AF4',
+    borderColor: Palette.primary,
   },
   controlRow: {
     flexDirection: 'row',
@@ -543,7 +551,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -565,10 +573,10 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.bgCard,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#100C08',
+    shadowColor: Palette.textPrimary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
@@ -577,14 +585,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    color: '#100C08',
+    color: Palette.textPrimary,
     marginBottom: 10,
     textAlign: 'center',
     fontFamily: Fonts.pretendardBold,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     textAlign: 'center',
     lineHeight: 22,
@@ -594,11 +602,11 @@ const styles = StyleSheet.create({
   emptyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E6AF4',
+    backgroundColor: Palette.primary,
     borderRadius: 14,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    shadowColor: '#1E6AF4',
+    shadowColor: Palette.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -606,16 +614,16 @@ const styles = StyleSheet.create({
   },
   emptyButtonText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Palette.bgCard,
     fontFamily: Fonts.pretendardBold,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: Palette.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.bgCard,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -626,19 +634,19 @@ const styles = StyleSheet.create({
   modalHeaderHandle: {
     width: 40,
     height: 4,
-    backgroundColor: 'rgba(16, 12, 8, 0.15)',
+    backgroundColor: Palette.borderSeparator,
     borderRadius: 2,
     marginBottom: 20,
   },
   modalTitle: {
     fontSize: 18,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
     marginBottom: 24,
   },
   speedRow: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Palette.bgAlt,
     borderRadius: 12,
     padding: 4,
     width: '100%',
@@ -651,8 +659,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   speedButtonSelected: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
+    backgroundColor: Palette.bgCard,
+    shadowColor: Palette.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -660,24 +668,24 @@ const styles = StyleSheet.create({
   },
   speedText: {
     fontSize: 14,
-    color: '#100C08',
+    color: Palette.textPrimary,
     opacity: 0.5,
     fontFamily: Fonts.pretendardBold,
   },
   speedTextSelected: {
     opacity: 1,
-    color: '#1E6AF4',
+    color: Palette.primary,
   },
   modalCloseButton: {
     width: '100%',
     paddingVertical: 14,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Palette.bgAlt,
     borderRadius: 12,
     alignItems: 'center',
   },
   modalCloseButtonText: {
     fontSize: 15,
-    color: '#100C08',
+    color: Palette.textPrimary,
     fontFamily: Fonts.pretendardBold,
   },
 });
