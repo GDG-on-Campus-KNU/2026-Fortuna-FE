@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -14,7 +15,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import MaskedView from '@react-native-masked-view/masked-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useContents } from '@/src/entities/content/hooks';
@@ -150,7 +150,7 @@ export default function HomeScreen() {
               style={{ opacity: 0.9 }}
             />
           </View>
-          <Text style={styles.addCardText}>새 노트북</Text>
+          <Text style={(styles.addCardText, { paddingEnd: 8 })}>새 노트북</Text>
         </Pressable>
       );
     }
@@ -367,8 +367,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 12, 8, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.04)',
   },
   buttonPressed: {
     opacity: 0.7,
@@ -400,9 +398,10 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   addCard: {
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: 0,
   },
   addIconContainer: {
     width: 32,
