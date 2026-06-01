@@ -570,9 +570,55 @@ export default function CreatePodcastScreen() {
                 },
               ]}
             />
-            <View style={styles.progressRingInner}>
-              <Text style={styles.progressPercentage}>{prog.percentage}</Text>
-            </View>
+            {/* Round caps for progress ring endpoints */}
+            {loadingStage < 4 && (
+              <>
+                {/* Start Cap (always at 0 degrees / top center) */}
+                <View
+                  style={[
+                    styles.progressCap,
+                    {
+                      left: 65,
+                      top: 0,
+                    },
+                  ]}
+                />
+                {/* End Cap */}
+                {loadingStage === 1 && (
+                  <View
+                    style={[
+                      styles.progressCap,
+                      {
+                        left: 130,
+                        top: 65,
+                      },
+                    ]}
+                  />
+                )}
+                {loadingStage === 2 && (
+                  <View
+                    style={[
+                      styles.progressCap,
+                      {
+                        left: 65,
+                        top: 130,
+                      },
+                    ]}
+                  />
+                )}
+                {loadingStage === 3 && (
+                  <View
+                    style={[
+                      styles.progressCap,
+                      {
+                        left: 0,
+                        top: 65,
+                      },
+                    ]}
+                  />
+                )}
+              </>
+            )}
           </View>
 
           <View style={styles.titleSectionCenter}>
@@ -805,18 +851,13 @@ const styles = StyleSheet.create({
     borderWidth: 8,
     backgroundColor: 'transparent',
   },
-  progressRingInner: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: Palette.primaryMuted,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressPercentage: {
-    fontSize: 28,
-    fontFamily: Fonts.googleSansFlexBold,
-    color: Palette.primary,
+  progressCap: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Palette.primary,
+    zIndex: 10,
   },
   generatingTitle: {
     fontSize: 20,
