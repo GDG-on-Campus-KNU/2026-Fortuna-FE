@@ -27,39 +27,25 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [nickname, setNickname] = useState('');
 
   // 활성화 포커스 상태
   const [focusedInput, setFocusedInput] = useState<
-    'email' | 'password' | 'confirmPassword' | 'nickname' | null
+    'email' | 'password' | 'confirmPassword' | null
   >(null);
 
   // 비밀번호 보이기 상태
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // 약관 동의 상태들
+  // 약관 동의 상태들 (피그마 디자인에 맞춰 필수 2개만 관리)
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [agreeMarketing, setAgreeMarketing] = useState(false);
 
   // 가입 동작 및 결과 상태들
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signUpSuccess, setSignUpSuccess] = useState(false);
 
   // 애니메이션 변수들
   const modeFadeAnim = useRef(new Animated.Value(1)).current; // 모드 트랜지션용 페이드
-  const successFadeAnim = useRef(new Animated.Value(0)).current; // 가입 성공 모달용 페이드
-  const successScaleAnim = useRef(new Animated.Value(0.7)).current; // 가입 성공 카드 스케일
-
-  // 전체 동의 유도 헬퍼
-  const agreeAll = agreeTerms && agreePrivacy && agreeMarketing;
-  const handleToggleAgreeAll = () => {
-    const nextVal = !agreeAll;
-    setAgreeTerms(nextVal);
-    setAgreePrivacy(nextVal);
-    setAgreeMarketing(nextVal);
-  };
 
   // 실시간 입력값 유효성 검사 규칙
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -67,7 +53,6 @@ export default function SignUpScreen() {
     password.length >= 8 && /[A-Za-z]/.test(password) && /[0-9]/.test(password);
   const isPasswordMatch =
     password === confirmPassword && confirmPassword.length > 0;
-  const isNicknameValid = nickname.trim().length >= 2;
   const areRequiredTermsAgreed = agreeTerms && agreePrivacy;
 
   // 전체 가입 폼 유효성 체크
@@ -75,7 +60,6 @@ export default function SignUpScreen() {
     isEmailValid &&
     isPasswordValid &&
     isPasswordMatch &&
-    isNicknameValid &&
     areRequiredTermsAgreed;
 
   // 화면 전환 (애니메이션 탑재)
@@ -114,22 +98,7 @@ export default function SignUpScreen() {
 
     setTimeout(() => {
       setIsSubmitting(false);
-      setNickname(provider + ' 유저');
-      setSignUpSuccess(true);
-
-      Animated.parallel([
-        Animated.timing(successFadeAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.spring(successScaleAnim, {
-          toValue: 1,
-          friction: 6,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      router.replace('/(tabs)');
     }, 1200);
   };
 
@@ -142,37 +111,20 @@ export default function SignUpScreen() {
     // 모의 API 서버 가동 흉내
     setTimeout(() => {
       setIsSubmitting(false);
-      setSignUpSuccess(true);
-
-      Animated.parallel([
-        Animated.timing(successFadeAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.spring(successScaleAnim, {
-          toValue: 1,
-          friction: 6,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      router.replace('/(tabs)');
     }, 1500);
-  };
-
-  // 가입 완료 후 홈 화면으로 가기
-  const handleStartApp = () => {
-    router.replace('/(tabs)');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 백그라운드 피그마 소프트 블루 그라데이션 */}
-      <LinearGradient
-        colors={['#EBF2FE', '#FDFDFD']}
-        locations={[0.40389, 0.50361]}
-        style={StyleSheet.absoluteFillObject}
-      />
+      {/* 백그라운드 피그마 소프트 블루 그라데이션 - 랜딩 화면에서만 노출 */}
+      {signUpMode === 'landing' && (
+        <LinearGradient
+          colors={['#EBF2FE', '#FDFDFD']}
+          locations={[0.40389, 0.50361]}
+          style={StyleSheet.absoluteFillObject}
+        />
+      )}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -293,10 +245,8 @@ export default function SignUpScreen() {
                     pressed && styles.actionPressed,
                   ]}
                 >
-                  <Ionicons name="chevron-back" size={24} color="#0F172A" />
+                  <Ionicons name="chevron-back" size={24} color="#100C08" />
                 </Pressable>
-                <Text style={styles.headerBarTitle}>이메일 가입</Text>
-                <View style={styles.headerBarPlaceholder} />
               </View>
 
               <ScrollView
@@ -306,16 +256,13 @@ export default function SignUpScreen() {
               >
                 {/* 환영 타이틀 */}
                 <View style={styles.titleSection}>
-                  <Text style={styles.titleText}>Studycast 가입하기</Text>
-                  <Text style={styles.subtitleText}>
-                    맞춤형 오디오와 암기송으로 낭비되는 이동 시간을 최고의 공부
-                    시간으로 만들어보세요!
-                  </Text>
+                  <Text style={styles.titleText}>계정 만들기</Text>
+                  <Text style={styles.subtitleText}>학습을 시작해보세요</Text>
                 </View>
 
-                {/* 1. 이메일 주소 입력 */}
+                {/* 1. 이메일 입력 */}
                 <View style={styles.inputSection}>
-                  <Text style={styles.inputLabel}>이메일 주소</Text>
+                  <Text style={styles.inputLabel}>이메일</Text>
                   <View
                     style={[
                       styles.inputWrapper,
@@ -323,21 +270,12 @@ export default function SignUpScreen() {
                       email.length > 0 &&
                         !isEmailValid &&
                         styles.inputWrapperError,
-                      email.length > 0 &&
-                        isEmailValid &&
-                        styles.inputWrapperSuccess,
                     ]}
                   >
-                    <Ionicons
-                      name="mail-outline"
-                      size={20}
-                      color={focusedInput === 'email' ? '#1E6AF4' : '#94A3B8'}
-                      style={styles.inputIcon}
-                    />
                     <TextInput
                       style={styles.textInput}
                       placeholder="example@email.com"
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor="rgba(16, 12, 8, 0.3)"
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -346,15 +284,6 @@ export default function SignUpScreen() {
                       onFocus={() => setFocusedInput('email')}
                       onBlur={() => setFocusedInput(null)}
                     />
-                    {email.length > 0 && (
-                      <Ionicons
-                        name={
-                          isEmailValid ? 'checkmark-circle' : 'alert-circle'
-                        }
-                        size={20}
-                        color={isEmailValid ? '#10B981' : '#EF4444'}
-                      />
-                    )}
                   </View>
                   {email.length > 0 && !isEmailValid && (
                     <Text style={styles.errorText}>
@@ -373,23 +302,12 @@ export default function SignUpScreen() {
                       password.length > 0 &&
                         !isPasswordValid &&
                         styles.inputWrapperError,
-                      password.length > 0 &&
-                        isPasswordValid &&
-                        styles.inputWrapperSuccess,
                     ]}
                   >
-                    <Ionicons
-                      name="lock-closed-outline"
-                      size={20}
-                      color={
-                        focusedInput === 'password' ? '#1E6AF4' : '#94A3B8'
-                      }
-                      style={styles.inputIcon}
-                    />
                     <TextInput
                       style={styles.textInput}
-                      placeholder="비밀번호 조합 입력"
-                      placeholderTextColor="#94A3B8"
+                      placeholder="••••••••"
+                      placeholderTextColor="rgba(16, 12, 8, 0.3)"
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -405,26 +323,19 @@ export default function SignUpScreen() {
                       <Ionicons
                         name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                         size={20}
-                        color="#94A3B8"
+                        color="#100C08"
+                        style={{ opacity: 0.5 }}
                       />
                     </Pressable>
                   </View>
-                  <Text
-                    style={[
-                      styles.helperText,
-                      password.length > 0 &&
-                        !isPasswordValid &&
-                        styles.helperTextError,
-                      password.length > 0 &&
-                        isPasswordValid &&
-                        styles.helperTextSuccess,
-                    ]}
-                  >
-                    💡 영문 대소문자 및 숫자를 조합하여 8자 이상 작성해 주세요.
-                  </Text>
+                  {password.length > 0 && !isPasswordValid && (
+                    <Text style={styles.errorText}>
+                      영문, 숫자 조합 8자 이상 작성해 주세요.
+                    </Text>
+                  )}
                 </View>
 
-                {/* 3. 비밀번호 확인 */}
+                {/* 3. 비밀번호 확인 입력 */}
                 <View style={styles.inputSection}>
                   <Text style={styles.inputLabel}>비밀번호 확인</Text>
                   <View
@@ -435,25 +346,12 @@ export default function SignUpScreen() {
                       confirmPassword.length > 0 &&
                         !isPasswordMatch &&
                         styles.inputWrapperError,
-                      confirmPassword.length > 0 &&
-                        isPasswordMatch &&
-                        styles.inputWrapperSuccess,
                     ]}
                   >
-                    <Ionicons
-                      name="checkmark-done-outline"
-                      size={20}
-                      color={
-                        focusedInput === 'confirmPassword'
-                          ? '#1E6AF4'
-                          : '#94A3B8'
-                      }
-                      style={styles.inputIcon}
-                    />
                     <TextInput
                       style={styles.textInput}
-                      placeholder="비밀번호 다시 입력"
-                      placeholderTextColor="#94A3B8"
+                      placeholder="••••••••"
+                      placeholderTextColor="rgba(16, 12, 8, 0.3)"
                       secureTextEntry={!showConfirmPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -475,7 +373,8 @@ export default function SignUpScreen() {
                             : 'eye-outline'
                         }
                         size={20}
-                        color="#94A3B8"
+                        color="#100C08"
+                        style={{ opacity: 0.5 }}
                       />
                     </Pressable>
                   </View>
@@ -484,178 +383,71 @@ export default function SignUpScreen() {
                       입력하신 비밀번호와 다릅니다. 다시 확인해 주세요.
                     </Text>
                   )}
-                  {confirmPassword.length > 0 && isPasswordMatch && (
-                    <Text style={styles.successText}>
-                      비밀번호가 안전하게 일치합니다.
-                    </Text>
-                  )}
                 </View>
 
-                {/* 4. 닉네임 입력 */}
+                {/* 이용 약관 동의 체크박스 영역 */}
                 <View style={styles.inputSection}>
-                  <Text style={styles.inputLabel}>닉네임</Text>
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      focusedInput === 'nickname' && styles.inputWrapperFocused,
-                      nickname.length > 0 &&
-                        !isNicknameValid &&
-                        styles.inputWrapperError,
-                      nickname.length > 0 &&
-                        isNicknameValid &&
-                        styles.inputWrapperSuccess,
-                    ]}
-                  >
-                    <Ionicons
-                      name="person-outline"
-                      size={20}
-                      color={
-                        focusedInput === 'nickname' ? '#1E6AF4' : '#94A3B8'
-                      }
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="닉네임 (2글자 이상)"
-                      placeholderTextColor="#94A3B8"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      maxLength={12}
-                      value={nickname}
-                      onChangeText={setNickname}
-                      onFocus={() => setFocusedInput('nickname')}
-                      onBlur={() => setFocusedInput(null)}
-                    />
-                    {nickname.length > 0 && (
-                      <Ionicons
-                        name={
-                          isNicknameValid ? 'checkmark-circle' : 'alert-circle'
-                        }
-                        size={20}
-                        color={isNicknameValid ? '#10B981' : '#EF4444'}
-                      />
-                    )}
+                  <Text style={styles.inputLabel}>이용 약관</Text>
+                  <View style={styles.termsContainer}>
+                    {/* 1. 서비스 이용 약관 동의 (필수) */}
+                    <Pressable
+                      onPress={() => setAgreeTerms(!agreeTerms)}
+                      style={({ pressed }) => [
+                        styles.termRow,
+                        pressed && styles.actionPressed,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.customCircleCheckbox,
+                          agreeTerms && styles.customCircleCheckboxChecked,
+                        ]}
+                      >
+                        {agreeTerms && (
+                          <Ionicons
+                            name="checkmark"
+                            size={12}
+                            color="#FFFFFF"
+                          />
+                        )}
+                      </View>
+                      <Text style={styles.termLabel}>
+                        (필수) 서비스 이용 약관 동의
+                      </Text>
+                    </Pressable>
+
+                    {/* 2. 개인정보 수집 및 이용 동의 (필수) */}
+                    <Pressable
+                      onPress={() => setAgreePrivacy(!agreePrivacy)}
+                      style={({ pressed }) => [
+                        styles.termRow,
+                        pressed && styles.actionPressed,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.customCircleCheckbox,
+                          agreePrivacy && styles.customCircleCheckboxChecked,
+                        ]}
+                      >
+                        {agreePrivacy && (
+                          <Ionicons
+                            name="checkmark"
+                            size={12}
+                            color="#FFFFFF"
+                          />
+                        )}
+                      </View>
+                      <Text style={styles.termLabel}>
+                        (필수) 개인정보 수집 및 이용 동의
+                      </Text>
+                    </Pressable>
                   </View>
-                  {nickname.length > 0 && !isNicknameValid && (
-                    <Text style={styles.errorText}>
-                      한글, 영문 구분 없이 최소 2글자 이상 입력해 주세요.
-                    </Text>
-                  )}
                 </View>
+              </ScrollView>
 
-                {/* 약관 동의 체크박스 영역 */}
-                <View style={styles.termsContainer}>
-                  {/* 1. 전체 동의 */}
-                  <Pressable
-                    onPress={handleToggleAgreeAll}
-                    style={({ pressed }) => [
-                      styles.agreeAllRow,
-                      pressed && styles.actionPressed,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.customCircleCheckbox,
-                        agreeAll && styles.customCheckboxCheckedBlue,
-                      ]}
-                    >
-                      {agreeAll && (
-                        <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                      )}
-                    </View>
-                    <Text style={styles.agreeAllText}>
-                      StudyCast 서비스 약관에 모두 동의합니다
-                    </Text>
-                  </Pressable>
-
-                  <View style={styles.termsDivider} />
-
-                  {/* 2. 이용 약관 (필수) */}
-                  <Pressable
-                    onPress={() => setAgreeTerms(!agreeTerms)}
-                    style={({ pressed }) => [
-                      styles.termRow,
-                      pressed && styles.actionPressed,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.customSquareCheckbox,
-                        agreeTerms && styles.customSquareCheckboxChecked,
-                      ]}
-                    >
-                      {agreeTerms && (
-                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                      )}
-                    </View>
-                    <Text style={styles.termLabel}>
-                      <Text style={styles.requiredMark}>(필수)</Text> 서비스
-                      이용 약관 동의
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color="#94A3B8"
-                      style={styles.termArrow}
-                    />
-                  </Pressable>
-
-                  {/* 3. 개인정보 처리 (필수) */}
-                  <Pressable
-                    onPress={() => setAgreePrivacy(!agreePrivacy)}
-                    style={({ pressed }) => [
-                      styles.termRow,
-                      pressed && styles.actionPressed,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.customSquareCheckbox,
-                        agreePrivacy && styles.customSquareCheckboxChecked,
-                      ]}
-                    >
-                      {agreePrivacy && (
-                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                      )}
-                    </View>
-                    <Text style={styles.termLabel}>
-                      <Text style={styles.requiredMark}>(필수)</Text> 개인정보
-                      수집 및 이용 동의
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color="#94A3B8"
-                      style={styles.termArrow}
-                    />
-                  </Pressable>
-
-                  {/* 4. 마케팅 야간 정보 수신 (선택) */}
-                  <Pressable
-                    onPress={() => setAgreeMarketing(!agreeMarketing)}
-                    style={({ pressed }) => [
-                      styles.termRow,
-                      pressed && styles.actionPressed,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.customSquareCheckbox,
-                        agreeMarketing && styles.customSquareCheckboxChecked,
-                      ]}
-                    >
-                      {agreeMarketing && (
-                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                      )}
-                    </View>
-                    <Text style={styles.termLabel}>
-                      <Text style={styles.optionalMark}>(선택)</Text> 서비스
-                      혜택 및 광고 마케팅 정보 수신 동의
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {/* 가입하기 버튼 */}
+              {/* 하단 고정 버튼 영역 */}
+              <View style={styles.bottomButtonSection}>
                 <Pressable
                   onPress={handleSignUp}
                   disabled={!isFormValid || isSubmitting}
@@ -668,86 +460,14 @@ export default function SignUpScreen() {
                   {isSubmitting ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.signUpButtonText}>가입 완료하기</Text>
+                    <Text style={styles.signUpButtonText}>계정 생성하기</Text>
                   )}
                 </Pressable>
-
-                <View style={styles.bottomLinkContainer}>
-                  <Text style={styles.bottomInfoText}>
-                    이미 StudyCast 계정이 있으신가요?
-                  </Text>
-                  <Pressable
-                    onPress={() => {
-                      router.push('/signin');
-                    }}
-                    style={({ pressed }) => pressed && styles.actionPressed}
-                  >
-                    <Text style={styles.bottomLinkText}>로그인하기</Text>
-                  </Pressable>
-                </View>
-              </ScrollView>
+              </View>
             </View>
           )}
         </Animated.View>
       </KeyboardAvoidingView>
-
-      {/* 회원가입 성공 애니메이션 오버레이 모달 */}
-      {signUpSuccess && (
-        <Animated.View
-          style={[styles.successOverlay, { opacity: successFadeAnim }]}
-        >
-          <Animated.View
-            style={[
-              styles.successCard,
-              { transform: [{ scale: successScaleAnim }] },
-            ]}
-          >
-            {/* 성공 폭죽 느낌 아이콘 */}
-            <View style={styles.successIconBg}>
-              <Ionicons
-                name="sparkles"
-                size={32}
-                color="#F59E0B"
-                style={styles.sparkleIconLeft}
-              />
-              <View style={styles.checkInnerCircle}>
-                <Ionicons name="checkmark" size={48} color="#FFFFFF" />
-              </View>
-              <Ionicons
-                name="heart"
-                size={24}
-                color="#EF4444"
-                style={styles.heartIconRight}
-              />
-            </View>
-
-            {/* 환영 정보 */}
-            <Text style={styles.successTitle}>반갑습니다, {nickname}님!</Text>
-            <Text style={styles.successSub}>
-              StudyCast 가입을 진심으로 축하합니다.
-            </Text>
-
-            <View style={styles.successTipBox}>
-              <Text style={styles.successTipText}>
-                🎓 <Text style={styles.successTipBold}>Tip.</Text> 이제 두 번째
-                탭인 {"'팟캐스트 생성'"}에서 PDF 파일을 업로드하면 AI 학습
-                오디오 및 암기곡을 바로 받아보실 수 있습니다.
-              </Text>
-            </View>
-
-            {/* 시작하기 단독 버튼 */}
-            <Pressable
-              onPress={handleStartApp}
-              style={({ pressed }) => [
-                styles.successAppButton,
-                pressed && styles.successAppButtonPressed,
-              ]}
-            >
-              <Text style={styles.successAppButtonText}>학습 시작하기 🎙️</Text>
-            </Pressable>
-          </Animated.View>
-        </Animated.View>
-      )}
     </SafeAreaView>
   );
 }
@@ -861,9 +581,8 @@ const styles = StyleSheet.create({
   },
   socialButtonText: {
     fontSize: 15,
-    fontWeight: '600',
     color: '#100C08',
-    fontFamily: Fonts.pretendardSemiBold,
+    fontFamily: Fonts.pretendardRegular,
   },
   landingLoader: {
     marginTop: 20,
@@ -881,33 +600,29 @@ const styles = StyleSheet.create({
   },
   landingFooterLink: {
     fontSize: 15,
-    fontWeight: '800',
     color: '#1E6AF4',
-    fontFamily: Fonts.pretendardExtraBold,
+    fontFamily: Fonts.pretendardRegular,
   },
   /* ========================================================
      2. 폼 상세 화면 스타일
      ======================================================== */
   formContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FDFDFD',
   },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     height: 56,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFDFD',
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    paddingLeft: 16,
   },
   headerBarTitle: {
     fontSize: 16,
@@ -920,52 +635,46 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 60,
   },
   titleSection: {
-    marginBottom: 28,
+    marginBottom: 32,
+    gap: 8,
   },
   titleText: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
-    fontFamily: Fonts.pretendardExtraBold,
+    color: '#100C08',
+    fontFamily: Fonts.pretendardBold,
   },
   subtitleText: {
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 18,
+    fontSize: 15,
+    color: '#100C08',
+    opacity: 0.5,
     fontFamily: Fonts.pretendardRegular,
   },
   inputSection: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 8,
-    fontFamily: Fonts.pretendardBold,
+    fontSize: 15,
+    color: '#100C08',
+    marginBottom: 4,
+    fontFamily: Fonts.pretendardRegular,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
+    height: 56,
+    backgroundColor: 'rgba(30, 106, 244, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderRadius: 16,
     paddingHorizontal: 16,
   },
   inputWrapperFocused: {
     borderColor: '#1E6AF4',
-    shadowColor: '#1E6AF4',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 1,
   },
   inputWrapperError: {
     borderColor: '#EF4444',
@@ -979,7 +688,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 15,
-    color: '#0F172A',
+    color: '#100C08',
     fontFamily: Fonts.pretendardRegular,
     height: '100%',
   },
@@ -1016,94 +725,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   termsContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    marginTop: 12,
-    marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  agreeAllRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  customCircleCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  customCheckboxCheckedBlue: {
-    backgroundColor: '#1E6AF4',
-    borderColor: '#1E6AF4',
-  },
-  agreeAllText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#1E293B',
-    fontFamily: Fonts.pretendardExtraBold,
-  },
-  termsDivider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 6,
+    borderColor: 'rgba(16, 12, 8, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    gap: 16,
+    marginTop: 4,
   },
   termRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    gap: 8,
   },
-  customSquareCheckbox: {
+  customCircleCheckbox: {
     width: 20,
     height: 20,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 12, 8, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
-  customSquareCheckboxChecked: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
+  customCircleCheckboxChecked: {
+    backgroundColor: '#1E6AF4',
+    borderColor: '#1E6AF4',
   },
   termLabel: {
-    flex: 1,
-    fontSize: 13,
-    color: '#475569',
+    fontSize: 15,
+    color: '#100C08',
     fontFamily: Fonts.pretendardRegular,
-  },
-  requiredMark: {
-    color: '#1E6AF4',
-    fontWeight: '700',
-  },
-  optionalMark: {
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  termArrow: {
-    paddingLeft: 8,
   },
   actionPressed: {
     opacity: 0.7,
   },
   signUpButton: {
     backgroundColor: '#1E6AF4',
-    height: 54,
+    height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1E6AF4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 3,
   },
   signUpButtonPressed: {
     opacity: 0.9,
@@ -1111,14 +771,11 @@ const styles = StyleSheet.create({
   },
   signUpButtonDisabled: {
     backgroundColor: '#CBD5E1',
-    shadowOpacity: 0,
-    elevation: 0,
   },
   signUpButtonText: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
     color: '#FFFFFF',
-    fontFamily: Fonts.pretendardExtraBold,
+    fontFamily: Fonts.pretendardMedium,
   },
   bottomLinkContainer: {
     flexDirection: 'row',
@@ -1138,116 +795,10 @@ const styles = StyleSheet.create({
     color: '#1E6AF4',
     fontFamily: Fonts.pretendardBold,
   },
-  /* ========================================================
-     3. 회원가입 성공 오버레이 모달 스타일
-     ======================================================= */
-  successOverlay: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  bottomButtonSection: {
     paddingHorizontal: 24,
-    zIndex: 9999,
-  },
-  successCard: {
-    backgroundColor: '#FFFFFF',
-    width: '100%',
-    borderRadius: 28,
-    paddingVertical: 36,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  successIconBg: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#ECFDF5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    position: 'relative',
-  },
-  checkInnerCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sparkleIconLeft: {
-    position: 'absolute',
-    left: -12,
-    top: -4,
-  },
-  heartIconRight: {
-    position: 'absolute',
-    right: -10,
-    bottom: 4,
-  },
-  successTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
-    fontFamily: Fonts.pretendardExtraBold,
-    textAlign: 'center',
-  },
-  successSub: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 24,
-    fontFamily: Fonts.pretendardRegular,
-    textAlign: 'center',
-  },
-  successTipBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 28,
-  },
-  successTipText: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 18,
-    fontFamily: Fonts.pretendardRegular,
-  },
-  successTipBold: {
-    fontWeight: '700',
-    color: '#1E6AF4',
-  },
-  successAppButton: {
-    backgroundColor: '#1E6AF4',
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#1E6AF4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  successAppButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  successAppButtonText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    fontFamily: Fonts.pretendardExtraBold,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 24,
+    paddingTop: 12,
+    backgroundColor: '#FDFDFD',
   },
 });
