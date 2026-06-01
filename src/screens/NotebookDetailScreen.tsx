@@ -7,7 +7,8 @@ import {
   StyleSheet,
   Text,
   View,
- Image } from 'react-native';
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -549,7 +550,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 12, 8, 0.04)',
   },
   backButtonPressed: {
     opacity: 0.7,

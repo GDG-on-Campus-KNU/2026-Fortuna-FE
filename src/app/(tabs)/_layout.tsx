@@ -15,13 +15,19 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: { display: 'none' },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: '홈',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={26} name={focused ? 'home' : 'home-outline'} color={color} />
+            <Ionicons
+              size={26}
+              name={focused ? 'home' : 'home-outline'}
+              color={color}
+            />
           ),
         }}
       />
@@ -30,16 +36,11 @@ export default function TabLayout() {
         options={{
           title: '팟캐스트 생성',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={26} name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="player"
-        options={{
-          title: '재생기',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={26} name={focused ? 'play-circle' : 'play-circle-outline'} color={color} />
+            <Ionicons
+              size={26}
+              name={focused ? 'add-circle' : 'add-circle-outline'}
+              color={color}
+            />
           ),
         }}
       />

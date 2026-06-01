@@ -1,6 +1,6 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -10,6 +10,8 @@ import {
   StyleSheet,
   Text,
   View,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,40 +36,111 @@ export default function AudioPlayerScreen() {
   const [isRepeat, setIsRepeat] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
+  // Drag down to dismiss gesture setup
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: (evt, gestureState) => {
+        const { pageY } = evt.nativeEvent;
+        // Only trigger from upper area of the screen (excluding the scroll content and bottom controls)
+        return pageY < 200;
+      },
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        const { pageY } = evt.nativeEvent;
+        const { dy, dx } = gestureState;
+        // Respond to downward dragging in the top area
+        return pageY < 200 && dy > 10 && Math.abs(dy) > Math.abs(dx) * 2;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dy > 120 || gestureState.vy > 0.5) {
+          Animated.timing(translateY, {
+            toValue: 1000,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => {
+            router.back();
+            translateY.setValue(0);
+          });
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 40,
+            friction: 7,
+          }).start();
+        }
+      },
+    }),
+  ).current;
+
+  // Backdrop opacity interpolation based on drag distance
+  const backdropOpacity = translateY.interpolate({
+    inputRange: [0, 300],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
   if (!activeTrack) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>오디오 플레이어</Text>
-        </View>
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconBg}>
-            <Ionicons name="disc-outline" size={54} color="#1E6AF4" />
-          </View>
-          <Text style={styles.emptyTitle}>
-            재생 중인 학습 캐스트가 없습니다
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            첫 번째 홈 보관함 탭에서 원하는 학습 카드를 선택하고 팟캐스트 재생을
-            시작해 보세요!
-          </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)')}
-            style={({ pressed }) => [
-              styles.emptyButton,
-              pressed && styles.controlPressed,
-            ]}
-          >
-            <Ionicons
-              name="home-outline"
-              size={18}
-              color="#FFFFFF"
-              style={{ marginRight: 6 }}
-            />
-            <Text style={styles.emptyButtonText}>보관함으로 이동하기</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        {/* Dynamic Dimming Backdrop */}
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              opacity: backdropOpacity,
+            },
+          ]}
+        />
+        <Animated.View
+          style={[styles.animatedContainer, { transform: [{ translateY }] }]}
+          {...panResponder.panHandlers}
+        >
+          <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+            {/* Drag Handle */}
+            <View style={styles.dragHandleContainer}>
+              <View style={styles.dragHandle} />
+            </View>
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>오디오 플레이어</Text>
+            </View>
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconBg}>
+                <Ionicons name="disc-outline" size={54} color="#1E6AF4" />
+              </View>
+              <Text style={styles.emptyTitle}>
+                재생 중인 학습 캐스트가 없습니다
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                첫 번째 홈 보관함 탭에서 원하는 학습 카드를 선택하고 팟캐스트
+                재생을 시작해 보세요!
+              </Text>
+              <Pressable
+                onPress={() => router.push('/(tabs)')}
+                style={({ pressed }) => [
+                  styles.emptyButton,
+                  pressed && styles.controlPressed,
+                ]}
+              >
+                <Ionicons
+                  name="home-outline"
+                  size={18}
+                  color="#FFFFFF"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.emptyButtonText}>보관함으로 이동하기</Text>
+              </Pressable>
+            </View>
+          </SafeAreaView>
+        </Animated.View>
+      </View>
     );
   }
 
@@ -106,199 +179,255 @@ export default function AudioPlayerScreen() {
   const formattedSubtitle = `${durationMin}분 · ${voiceLabel}`;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* 1. Header Layout */}
-      <View style={styles.header}>
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle} numberOfLines={2}>
-            {title}
-          </Text>
-          <Text style={styles.headerSubtitle}>{formattedSubtitle}</Text>
-        </View>
-        <Pressable
-          onPress={() => setIsModalVisible(true)}
-          style={({ pressed }) => [
-            styles.moreButton,
-            pressed && styles.controlPressed,
-          ]}
-        >
-          <Ionicons name="ellipsis-horizontal" size={24} color="#100C08" />
-        </Pressable>
-      </View>
-
-      {/* 2. Scrollable Transcript Card */}
-      <View style={styles.transcriptCard}>
-        <ScrollView
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={styles.transcriptScrollContent}
-        >
-          <Text style={styles.transcriptText}>
-            {activeTrack.description || '작성된 대본이 없습니다.'}
-          </Text>
-        </ScrollView>
-      </View>
-
-      {/* 3. Time Labels & Seekbar (Time Row is ABOVE Progress Track) */}
-      <View style={styles.sliderContainer}>
-        <View style={styles.timeInfoRow}>
-          <Text style={styles.timeValue}>{formatTime(positionSeconds)}</Text>
-          <Text style={styles.timeValue}>{formatTime(durationSeconds)}</Text>
-        </View>
-
-        <Pressable
-          accessibilityLabel="재생 위치 이동"
-          accessibilityRole="adjustable"
-          onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
-          onPress={handleSeek}
-          style={styles.sliderTrack}
-        >
-          <View
-            style={[styles.sliderFill, { width: `${progressRatio * 100}%` }]}
-          />
-          <View
-            style={[styles.sliderThumb, { left: `${progressRatio * 100}%` }]}
-          />
-        </Pressable>
-      </View>
-
-      {/* 4. Controls Row (Shuffle, Replay 10, Play/Pause, Forward 10, Repeat) */}
-      <View style={styles.controlRow}>
-        <Pressable
-          onPress={() => setIsShuffle(!isShuffle)}
-          style={({ pressed }) => [
-            styles.iconControl,
-            pressed && styles.controlPressed,
-          ]}
-        >
-          <Ionicons
-            name="shuffle"
-            size={24}
-            color={isShuffle ? '#1E6AF4' : '#100C08'}
-          />
-        </Pressable>
-
-        <Pressable
-          onPress={() => jump(-10)}
-          style={({ pressed }) => [
-            styles.circleControl,
-            pressed && styles.controlPressed,
-          ]}
-        >
-          <MaterialIcons name={'replay-10' as any} size={24} color="#100C08" />
-        </Pressable>
-
-        <Pressable
-          onPress={() => togglePlayback()}
-          disabled={isLoading}
-          style={({ pressed }) => [
-            styles.primaryControl,
-            pressed && styles.controlPressed,
-          ]}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={28}
-              color="#FFFFFF"
-              style={isPlaying ? null : styles.playIconOffset}
-            />
-          )}
-        </Pressable>
-
-        <Pressable
-          onPress={() => jump(10)}
-          style={({ pressed }) => [
-            styles.circleControl,
-            pressed && styles.controlPressed,
-          ]}
-        >
-          <MaterialIcons name={'forward-10' as any} size={24} color="#100C08" />
-        </Pressable>
-
-        <Pressable
-          onPress={() => setIsRepeat(!isRepeat)}
-          style={({ pressed }) => [
-            styles.iconControl,
-            pressed && styles.controlPressed,
-          ]}
-        >
-          <Ionicons
-            name="repeat"
-            size={24}
-            color={isRepeat ? '#1E6AF4' : '#100C08'}
-          />
-        </Pressable>
-      </View>
-
-      {/* 5. More Options Modal (Bottom Sheet for Playback Speed) */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
+    <View style={styles.container}>
+      {/* Dynamic Dimming Backdrop */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            opacity: backdropOpacity,
+          },
+        ]}
+      />
+      <Animated.View
+        style={[styles.animatedContainer, { transform: [{ translateY }] }]}
+        {...panResponder.panHandlers}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setIsModalVisible(false)}
-        >
-          <View
-            style={styles.modalContent}
-            onStartShouldSetResponder={() => true}
-          >
-            <View style={styles.modalHeaderHandle} />
-            <Text style={styles.modalTitle}>재생 속도 설정</Text>
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+          {/* Drag Handle */}
+          <View style={styles.dragHandleContainer}>
+            <View style={styles.dragHandle} />
+          </View>
 
-            <View style={styles.speedRow}>
-              {PLAYBACK_RATES.map((playbackRate) => {
-                const isSelected = playbackRate === rate;
-                return (
-                  <Pressable
-                    key={playbackRate}
-                    onPress={() => {
-                      void setRate(playbackRate);
-                      setIsModalVisible(false);
-                    }}
-                    style={({ pressed }) => [
-                      styles.speedButton,
-                      isSelected && styles.speedButtonSelected,
-                      pressed && styles.controlPressed,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.speedText,
-                        isSelected && styles.speedTextSelected,
-                      ]}
-                    >
-                      {playbackRate}x
-                    </Text>
-                  </Pressable>
-                );
-              })}
+          {/* 1. Header Layout */}
+          <View style={styles.header}>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle} numberOfLines={2}>
+                {title}
+              </Text>
+              <Text style={styles.headerSubtitle}>{formattedSubtitle}</Text>
             </View>
-
             <Pressable
-              onPress={() => setIsModalVisible(false)}
+              onPress={() => setIsModalVisible(true)}
               style={({ pressed }) => [
-                styles.modalCloseButton,
+                styles.moreButton,
                 pressed && styles.controlPressed,
               ]}
             >
-              <Text style={styles.modalCloseButtonText}>닫기</Text>
+              <Ionicons name="ellipsis-horizontal" size={24} color="#100C08" />
             </Pressable>
           </View>
-        </Pressable>
-      </Modal>
-    </SafeAreaView>
+
+          {/* 2. Scrollable Transcript Card */}
+          <View style={styles.transcriptCard}>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={styles.transcriptScrollContent}
+            >
+              <Text style={styles.transcriptText}>
+                {activeTrack.description || '작성된 대본이 없습니다.'}
+              </Text>
+            </ScrollView>
+          </View>
+
+          {/* 3. Time Labels & Seekbar (Time Row is ABOVE Progress Track) */}
+          <View style={styles.sliderContainer}>
+            <View style={styles.timeInfoRow}>
+              <Text style={styles.timeValue}>
+                {formatTime(positionSeconds)}
+              </Text>
+              <Text style={styles.timeValue}>
+                {formatTime(durationSeconds)}
+              </Text>
+            </View>
+
+            <Pressable
+              accessibilityLabel="재생 위치 이동"
+              accessibilityRole="adjustable"
+              onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
+              onPress={handleSeek}
+              style={styles.sliderTrack}
+            >
+              <View
+                style={[
+                  styles.sliderFill,
+                  { width: `${progressRatio * 100}%` },
+                ]}
+              />
+              <View
+                style={[
+                  styles.sliderThumb,
+                  { left: `${progressRatio * 100}%` },
+                ]}
+              />
+            </Pressable>
+          </View>
+
+          {/* 4. Controls Row (Shuffle, Replay 10, Play/Pause, Forward 10, Repeat) */}
+          <View style={styles.controlRow}>
+            <Pressable
+              onPress={() => setIsShuffle(!isShuffle)}
+              style={({ pressed }) => [
+                styles.iconControl,
+                pressed && styles.controlPressed,
+              ]}
+            >
+              <Ionicons
+                name="shuffle"
+                size={24}
+                color={isShuffle ? '#1E6AF4' : '#100C08'}
+              />
+            </Pressable>
+
+            <Pressable
+              onPress={() => jump(-10)}
+              style={({ pressed }) => [
+                styles.circleControl,
+                pressed && styles.controlPressed,
+              ]}
+            >
+              <MaterialIcons
+                name={'replay-10' as any}
+                size={24}
+                color="#100C08"
+              />
+            </Pressable>
+
+            <Pressable
+              onPress={() => togglePlayback()}
+              disabled={isLoading}
+              style={({ pressed }) => [
+                styles.primaryControl,
+                pressed && styles.controlPressed,
+              ]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Ionicons
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={28}
+                  color="#FFFFFF"
+                  style={isPlaying ? null : styles.playIconOffset}
+                />
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={() => jump(10)}
+              style={({ pressed }) => [
+                styles.circleControl,
+                pressed && styles.controlPressed,
+              ]}
+            >
+              <MaterialIcons
+                name={'forward-10' as any}
+                size={24}
+                color="#100C08"
+              />
+            </Pressable>
+
+            <Pressable
+              onPress={() => setIsRepeat(!isRepeat)}
+              style={({ pressed }) => [
+                styles.iconControl,
+                pressed && styles.controlPressed,
+              ]}
+            >
+              <Ionicons
+                name="repeat"
+                size={24}
+                color={isRepeat ? '#1E6AF4' : '#100C08'}
+              />
+            </Pressable>
+          </View>
+
+          {/* 5. More Options Modal (Bottom Sheet for Playback Speed) */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={() => setIsModalVisible(false)}
+          >
+            <Pressable
+              style={styles.modalOverlay}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <View
+                style={styles.modalContent}
+                onStartShouldSetResponder={() => true}
+              >
+                <View style={styles.modalHeaderHandle} />
+                <Text style={styles.modalTitle}>재생 속도 설정</Text>
+
+                <View style={styles.speedRow}>
+                  {PLAYBACK_RATES.map((playbackRate) => {
+                    const isSelected = playbackRate === rate;
+                    return (
+                      <Pressable
+                        key={playbackRate}
+                        onPress={() => {
+                          void setRate(playbackRate);
+                          setIsModalVisible(false);
+                        }}
+                        style={({ pressed }) => [
+                          styles.speedButton,
+                          isSelected && styles.speedButtonSelected,
+                          pressed && styles.controlPressed,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.speedText,
+                            isSelected && styles.speedTextSelected,
+                          ]}
+                        >
+                          {playbackRate}x
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Pressable
+                  onPress={() => setIsModalVisible(false)}
+                  style={({ pressed }) => [
+                    styles.modalCloseButton,
+                    pressed && styles.controlPressed,
+                  ]}
+                >
+                  <Text style={styles.modalCloseButtonText}>닫기</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Modal>
+        </SafeAreaView>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
+  },
+  animatedContainer: {
+    flex: 1,
     backgroundColor: '#EBF2FE',
+    overflow: 'hidden',
+  },
+  dragHandleContainer: {
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  dragHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: 'rgba(16, 12, 8, 0.15)',
   },
   header: {
     flexDirection: 'row',
