@@ -343,7 +343,7 @@ export default function NotebookDetailScreen({
     <View style={styles.listItem} key={item.id}>
       <View style={styles.listItemLeft}>
         <View style={styles.fileIconContainer}>
-          <Ionicons name="document-text" size={22} color="#EF4444" />
+          <Ionicons name="document-text" size={22} color="#1E6AF4" />
         </View>
         <View style={styles.listItemTextContainer}>
           <Text style={styles.itemTitle} numberOfLines={1}>
@@ -606,6 +606,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 8,
+    gap: 16,
   },
   listItemLeft: {
     flexDirection: 'row',
@@ -617,7 +618,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 6,
-    backgroundColor: 'rgba(16, 12, 8, 0.05)',
+    backgroundColor: '#FDFDFD',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -625,7 +626,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 6,
-    backgroundColor: '#FFF1F2',
+    backgroundColor: '#FDFDFD',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -652,13 +653,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FDFDFD',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#100C08',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.04)',
   },
   closeCircle: {
     width: 24,
@@ -667,13 +661,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FDFDFD',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#100C08',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.04)',
   },
   circlePressed: {
     opacity: 0.8,
@@ -687,7 +674,7 @@ const styles = StyleSheet.create({
   },
   footerContainer: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 36,
     left: 24,
     right: 24,
   },
@@ -695,13 +682,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E6AF4',
     borderRadius: 16,
     paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1E6AF4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
   ctaButtonPressed: {
     opacity: 0.85,
