@@ -45,14 +45,50 @@ export function installMockAdapter(): void {
 
   mock.onDelete(/\/contents\/.+/).reply(204);
 
+  mock.onPost('/contents').reply((config) => {
+    try {
+      const { title } = JSON.parse(config.data || '{}');
+      const newId = `c_notebook_${Date.now()}`;
+      const newNotebook = {
+        id: newId,
+        userId: 'u_demo',
+        title: title || '새 노트북',
+        duration: 10 as const,
+        format: 'dialog' as const,
+        ttsVoice: 'friend' as const,
+        script:
+          '새로 생성된 노트북입니다. 자료를 업로드하고 팟캐스트를 생성해 보세요.',
+        audioUrl: null,
+        status: 'done' as const,
+        createdAt: new Date().toISOString(),
+      };
+      mockContents.unshift(newNotebook);
+      return [201, toSnakeContent(newNotebook)];
+    } catch {
+      return [400, { error: 'invalid_payload' }];
+    }
+  });
+
   mock.onPost('/generate').reply((config) => {
     try {
       const params = JSON.parse(config.data || '{}');
       const newId = `c_demo_${Date.now()}`;
-      
-      const formatLabel = params.format === 'dialog' ? '대화형' : params.format === 'quiz' ? '퀴즈형' : '스토리형';
-      const voiceLabel = params.ttsVoice === 'professor' ? '교수' : params.ttsVoice === 'friend' ? '친구' : params.ttsVoice === 'coach' ? '도전(화난)' : '속삭임';
-      
+
+      const formatLabel =
+        params.format === 'dialog'
+          ? '대화형'
+          : params.format === 'quiz'
+            ? '퀴즈형'
+            : '스토리형';
+      const voiceLabel =
+        params.ttsVoice === 'professor'
+          ? '교수'
+          : params.ttsVoice === 'friend'
+            ? '친구'
+            : params.ttsVoice === 'coach'
+              ? '도전(화난)'
+              : '속삭임';
+
       mockContents.unshift({
         id: newId,
         userId: 'u_demo',
@@ -95,6 +131,6 @@ export function installMockAdapter(): void {
     ];
   });
 
-  // eslint-disable-next-line no-console
+   
   console.log('[mockAdapter] installed — all axios requests are intercepted');
 }

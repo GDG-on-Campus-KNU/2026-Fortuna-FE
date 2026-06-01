@@ -9,10 +9,14 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +27,7 @@ import type {
   Content,
   TtsVoice,
 } from '@/src/entities/content/model';
+import { contentRepository } from '@/src/entities/content/repository';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
 
@@ -39,6 +44,10 @@ export default function HomeScreen() {
   const activeTrack = useAudioStore((state) => state.activeTrack);
   const playbackState = useAudioStore((state) => state.playbackState);
   const togglePlayback = useAudioStore((state) => state.togglePlayback);
+
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [notebookTitle, setNotebookTitle] = React.useState('');
+  const [isCreating, setIsCreating] = React.useState(false);
 
   const getFormatDetails = (format: AudioFormat) => {
     switch (format) {
@@ -127,7 +136,28 @@ export default function HomeScreen() {
   };
 
   const handleCreateNewNotebook = () => {
-    router.push('/create');
+    setNotebookTitle('');
+    setIsModalVisible(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    if (!notebookTitle.trim()) {
+      Alert.alert('알림', '노트북 이름을 입력해 주세요.');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await contentRepository.create(notebookTitle.trim());
+      setIsModalVisible(false);
+      refresh();
+      Alert.alert('성공', '새 노트북이 성공적으로 생성되었습니다!');
+    } catch (err) {
+      console.error('[HomeScreen] 노트북 생성 오류:', err);
+      Alert.alert('오류', '노트북 생성에 실패했습니다.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const renderGridItem = ({ item }: { item: GridItem }) => {
@@ -211,6 +241,83 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {/* 새 노트북 생성 모달 */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => {
+          if (!isCreating) setIsModalVisible(false);
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <BlurView
+            intensity={30}
+            tint="dark"
+            style={StyleSheet.absoluteFillObject}
+          />
+          <Pressable
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => {
+              if (!isCreating) setIsModalVisible(false);
+            }}
+          />
+
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>새 노트북 생성</Text>
+            <Text style={styles.modalSubtitle}>
+              노트북 이름을 입력하여 공부를 시작해 보세요!
+            </Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="노트북 이름 (예: 알고리즘 시험 대비)"
+              placeholderTextColor={Palette.textMuted}
+              value={notebookTitle}
+              onChangeText={setNotebookTitle}
+              autoFocus={true}
+              maxLength={30}
+              editable={!isCreating}
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => setIsModalVisible(false)}
+                style={({ pressed }) => [
+                  styles.modalButton,
+                  styles.modalButtonCancel,
+                  pressed && styles.buttonPressed,
+                ]}
+                disabled={isCreating}
+              >
+                <Text style={styles.modalButtonTextCancel}>취소</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleConfirmCreate}
+                style={({ pressed }) => [
+                  styles.modalButton,
+                  styles.modalButtonConfirm,
+                  pressed && styles.buttonPressed,
+                  (!notebookTitle.trim() || isCreating) &&
+                    styles.modalButtonDisabled,
+                ]}
+                disabled={!notebookTitle.trim() || isCreating}
+              >
+                {isCreating ? (
+                  <ActivityIndicator size="small" color={Palette.bgCard} />
+                ) : (
+                  <Text style={styles.modalButtonTextConfirm}>생성</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* 백그라운드 피그마 소프트 블루 그라데이션 */}
       <LinearGradient
         colors={[Palette.primaryLight, Palette.bgPage]}
@@ -512,5 +619,80 @@ const styles = StyleSheet.create({
   },
   playButton: {
     padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: Palette.bgCard,
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: Palette.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Palette.textPrimary,
+    fontFamily: Fonts.pretendardBold,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: Palette.textSecondary,
+    fontFamily: Fonts.pretendardRegular,
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalInput: {
+    backgroundColor: Palette.primaryMuted,
+    borderWidth: 1.5,
+    borderColor: Palette.primaryBorder,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 50,
+    fontSize: 15,
+    fontFamily: Fonts.pretendardMedium,
+    color: Palette.textPrimary,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: Palette.bgAlt,
+  },
+  modalButtonConfirm: {
+    backgroundColor: Palette.primary,
+  },
+  modalButtonDisabled: {
+    backgroundColor: Palette.primaryDisabled,
+  },
+  modalButtonTextCancel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Palette.textSecondary,
+    fontFamily: Fonts.pretendardSemiBold,
+  },
+  modalButtonTextConfirm: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Palette.bgCard,
+    fontFamily: Fonts.pretendardSemiBold,
   },
 });
