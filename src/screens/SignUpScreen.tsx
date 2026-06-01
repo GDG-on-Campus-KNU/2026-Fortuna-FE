@@ -86,7 +86,7 @@ export default function SignUpScreen() {
       if (router.canGoBack()) {
         router.back();
       } else {
-        router.replace('/(tabs)');
+        router.replace('/');
       }
     }
   };
@@ -98,7 +98,7 @@ export default function SignUpScreen() {
 
     setTimeout(() => {
       setIsSubmitting(false);
-      router.replace('/(tabs)');
+      router.replace('/');
     }, 1200);
   };
 
@@ -111,7 +111,7 @@ export default function SignUpScreen() {
     // 모의 API 서버 가동 흉내
     setTimeout(() => {
       setIsSubmitting(false);
-      router.replace('/(tabs)');
+      router.replace('/');
     }, 1500);
   };
 

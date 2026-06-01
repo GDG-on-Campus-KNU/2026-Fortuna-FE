@@ -123,7 +123,7 @@ export default function AudioPlayerScreen() {
                 재생을 시작해 보세요!
               </Text>
               <Pressable
-                onPress={() => router.push('/(tabs)')}
+                onPress={() => router.push('/')}
                 style={({ pressed }) => [
                   styles.emptyButton,
                   pressed && styles.controlPressed,

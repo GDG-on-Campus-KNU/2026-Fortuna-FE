@@ -39,8 +39,8 @@ export default function SignInScreen() {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      // 홈 화면(tabs)으로 이동
-      router.replace('/(tabs)');
+      // 홈 화면으로 이동
+      router.replace('/');
     }, 1200);
   };
 
@@ -51,7 +51,7 @@ export default function SignInScreen() {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      router.replace('/(tabs)');
+      router.replace('/');
     }, 1000);
   };
 

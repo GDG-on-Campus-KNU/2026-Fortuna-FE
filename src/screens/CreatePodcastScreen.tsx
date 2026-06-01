@@ -125,7 +125,7 @@ export default function CreatePodcastScreen() {
             {
               text: '확인',
               onPress: () => {
-                router.replace('/(tabs)');
+                router.replace('/');
               },
             },
           ],

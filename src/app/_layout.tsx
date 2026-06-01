@@ -31,10 +31,6 @@ SplashScreen.preventAutoHideAsync().catch((err) => {
   console.warn('Failed to prevent auto hide splash screen:', err);
 });
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded, error] = useFonts({
@@ -70,7 +66,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="create"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="signin" options={{ headerShown: false }} />
         <Stack.Screen name="notebook/[id]" options={{ headerShown: false }} />
