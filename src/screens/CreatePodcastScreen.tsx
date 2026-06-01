@@ -763,11 +763,6 @@ const styles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1E6AF4',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
   },
   primaryButtonPressed: {
     opacity: 0.85,
