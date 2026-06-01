@@ -584,8 +584,6 @@ const styles = StyleSheet.create({
   },
   tabButtonInactive: {
     backgroundColor: '#FDFDFD',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 12, 8, 0.08)',
   },
   tabText: {
     fontSize: 13,
