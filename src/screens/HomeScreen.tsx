@@ -30,6 +30,7 @@ import type {
 import { contentRepository } from '@/src/entities/content/repository';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
+import { authRepository } from '@/src/entities/auth';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 12;
@@ -129,7 +130,7 @@ export default function HomeScreen() {
         text: '로그아웃',
         style: 'destructive',
         onPress: () => {
-          router.replace('/signin');
+          authRepository.logout();
         },
       },
     ]);
