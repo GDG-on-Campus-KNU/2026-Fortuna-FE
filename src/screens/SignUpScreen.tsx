@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -227,7 +228,7 @@ export default function SignUpScreen() {
                 </Text>
                 <Pressable
                   onPress={() => {
-                    router.push('/signin');
+                    router.push('/login');
                   }}
                   style={({ pressed }) => pressed && styles.actionPressed}
                 >
