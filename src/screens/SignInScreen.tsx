@@ -9,7 +9,6 @@ import {
   Text,
   TextInput,
   View,
-  Image,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,13 +49,8 @@ export default function SignInScreen() {
     submit({ email, password });
   };
 
-  // Google 소셜 로그인 시뮬레이션
-  const handleGoogleSignIn = () => {
-    if (submitting) return;
-
-    // 소셜 로그인 진행 중 표시
-    Alert.alert('소셜 로그인', 'Google 로그인을 진행합니다.');
-  };
+  // Google 소셜 로그인은 P1으로 보류(Firebase 제거 → 추후 FastAPI OAuth).
+  // MVP에서는 버튼을 숨겨 깨진 동작이 노출되지 않게 한다.
 
   const handleForgotPassword = () => {
     Alert.alert(
@@ -201,36 +195,7 @@ export default function SignInScreen() {
             )}
           </Pressable>
 
-          {/* "또는" 구분선 */}
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>또는</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Google 로그인 */}
-          <Pressable
-            onPress={handleGoogleSignIn}
-            disabled={submitting}
-            style={({ pressed }) => [
-              styles.googleButton,
-              pressed && styles.actionPressed,
-            ]}
-          >
-            <View style={styles.googleBtnContent}>
-              <View style={styles.googleIconContainer}>
-                <Image
-                  source={{
-                    uri: 'https://developers.google.com/identity/images/g-logo.png',
-                  }}
-                  style={styles.googleIcon}
-                />
-              </View>
-              <Text style={styles.googleButtonText}>
-                Google 계정으로 로그인
-              </Text>
-            </View>
-          </Pressable>
+          {/* Google 소셜 로그인 버튼은 P1 보류로 MVP에서 숨김 (위 주석 참고) */}
 
           {/* 회원가입하기 링크 */}
           <Pressable
