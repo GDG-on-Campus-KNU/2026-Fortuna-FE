@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
+import { useJobPolling } from '@/src/entities';
 import type {
   AudioFormat,
   DurationMin,
@@ -36,6 +36,38 @@ export default function CreatePodcastScreen() {
   const [format, setFormat] = useState<AudioFormat>('dialog');
   const [voice, setVoice] = useState<TtsVoice>('friend');
   const [duration, setDuration] = useState<DurationMin>(10);
+  const [jobId, setJobId] = useState<string | null>(null);
+
+  // jobId가 정해지면 완료될 때까지 자동으로 상태를 확인(폴링)한다.
+  const { job } = useJobPolling(jobId);
+
+  // 생성 작업이 완료(또는 실패)되면 처리한다.
+  useEffect(() => {
+    if (!job) return;
+
+    if (job.status === 'done') {
+      setJobId(null);
+      // 로딩 스테이지 완료(4)로 변경
+      setLoadingStage(4);
+
+      // 연출 타이머를 제거하고 완료 Alert 실행
+      timersRef.current.forEach(clearTimeout);
+
+      const timer = setTimeout(() => {
+        Alert.alert(
+          '완성!',
+          'AI 팟캐스트가 완성됐어요. 보관함에서 들어보세요!',
+          [{ text: '확인', onPress: () => router.replace('/') }],
+        );
+      }, 800);
+      timersRef.current.push(timer);
+    } else if (job.status === 'failed') {
+      setJobId(null);
+      timersRef.current.forEach(clearTimeout);
+      Alert.alert('오류', '팟캐스트 생성에 실패했어요. 다시 시도해 주세요.');
+      setStep(4);
+    }
+  }, [job]);
 
   // Step 5 loading states
   const [loadingStage, setLoadingStage] = useState<1 | 2 | 3 | 4>(1);
@@ -97,8 +129,8 @@ export default function CreatePodcastScreen() {
     };
 
     try {
-      // 1. 실제로 contentRepository.generate를 호출하여 'generating' 상태의 임시 카드를 MMKV에 캐시 저장합니다.
-      await contentRepository.generate(
+      // 1. 생성 요청을 보내고, 돌려받은 jobId를 저장한다.
+      const result = await contentRepository.generate(
         {
           materialId: `mat_demo_${Date.now()}`,
           duration,
@@ -115,27 +147,17 @@ export default function CreatePodcastScreen() {
         },
       );
 
-      // 전체 시뮬레이션이 끝나는 시점에 Alert를 띄우고 홈으로 보냅니다.
-      const t4 = setTimeout(() => {
-        Alert.alert(
-          '생성 성공!',
-          'AI 맞춤형 학습 팟캐스트 생성이 정상적으로 요청되었습니다. 홈 화면에서 확인해 보세요!',
-          [
-            {
-              text: '확인',
-              onPress: () => {
-                router.replace('/');
-              },
-            },
-          ],
-        );
-      }, 6500) as any;
+      // 2. jobId를 저장하면 위의 useJobPolling이 완료될 때까지 자동으로 확인한다.
+      //    완료/실패 처리는 위쪽 useEffect에서 한다.
+      setJobId(result.jobId);
 
-      timersRef.current = [t1, t2, t3, t4];
+      // 로딩 스테이지 연출 타이머 작동
+      timersRef.current = [t1, t2, t3];
     } catch (err) {
       // Clear timers and reset
       timersRef.current.forEach(clearTimeout);
       Alert.alert('오류', '팟캐스트 생성 요청에 실패했습니다.');
+
       console.error('[CreatePodcastScreen] handleCreate error:', err);
       setStep(4);
     }
