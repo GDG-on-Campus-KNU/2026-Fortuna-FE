@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -8,20 +10,47 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 
-import type { AudioFormat, DurationMin, TtsVoice } from '@/src/entities/content/model';
+import { useJobPolling } from '@/src/entities';
+import type {
+  AudioFormat,
+  DurationMin,
+  TtsVoice,
+} from '@/src/entities/content/model';
 import { contentRepository } from '@/src/entities/content/repository';
 import { Fonts } from '@/src/shared/constants/theme';
 
 export default function CreatePodcastScreen() {
   // 폼 상태들
-  const [selectedFile, setSelectedFile] = useState<{ name: string; size: string } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{
+    name: string;
+    size: string;
+  } | null>(null);
   const [duration, setDuration] = useState<DurationMin>(10);
   const [format, setFormat] = useState<AudioFormat>('dialog');
   const [voice, setVoice] = useState<TtsVoice>('friend');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+
+  // jobId가 정해지면 완료될 때까지 자동으로 상태를 확인(폴링)한다.
+  const { job } = useJobPolling(jobId);
+
+  // 생성 작업이 완료(또는 실패)되면 처리한다.
+  useEffect(() => {
+    if (!job) return;
+
+    if (job.status === 'done') {
+      setIsSubmitting(false);
+      setJobId(null);
+      Alert.alert('완성!', 'AI 팟캐스트가 완성됐어요. 보관함에서 들어보세요!', [
+        { text: '확인', onPress: () => router.push('/(tabs)') },
+      ]);
+    } else if (job.status === 'failed') {
+      setIsSubmitting(false);
+      setJobId(null);
+      Alert.alert('오류', '팟캐스트 생성에 실패했어요. 다시 시도해 주세요.');
+    }
+  }, [job]);
 
   // 모의 파일 선택 함수
   const handleSelectFile = () => {
@@ -45,8 +74,8 @@ export default function CreatePodcastScreen() {
     setIsSubmitting(true);
 
     try {
-      // 1. 실제로 contentRepository.generate를 호출하여 'generating' 상태의 임시 카드를 MMKV에 캐시 저장합니다.
-      await contentRepository.generate(
+      // 1. 생성 요청을 보내고, 돌려받은 jobId를 저장한다.
+      const result = await contentRepository.generate(
         {
           materialId: 'mat_demo_001',
           duration,
@@ -55,37 +84,35 @@ export default function CreatePodcastScreen() {
         },
         {
           userId: 'u_demo',
-          title: selectedFile.name.replace(/\.[^/.]+$/, "") + ` (AI ${duration}분 요약)`,
+          title:
+            selectedFile.name.replace(/\.[^/.]+$/, '') +
+            ` (AI ${duration}분 요약)`,
           duration,
           format,
           ttsVoice: voice,
           script: `${selectedFile.name} 분석 중... 팟캐스트 콘텐츠를 생성하고 있습니다. 잠시만 기다려주세요.`,
-        }
+        },
       );
 
-      setIsSubmitting(false);
-      Alert.alert(
-        '생성 시작!',
-        'AI 맞춤 팟캐스트가 생성 중입니다. 홈 보관함에서 확인해보세요!',
-        [
-          {
-            text: '확인',
-            onPress: () => {
-              router.push('/(tabs)');
-            },
-          },
-        ]
-      );
+      // 2. jobId를 저장하면 위의 useJobPolling이 완료될 때까지 자동으로 확인한다.
+      //    완료/실패 처리는 위쪽 useEffect에서 한다.
+      setJobId(result.jobId);
     } catch (err) {
       setIsSubmitting(false);
       Alert.alert('오류', '팟캐스트 생성 요청에 실패했습니다.');
-      // eslint-disable-next-line no-console
+       
       console.error('[CreatePodcastScreen] handleCreate error:', err);
     }
   };
 
   // 포맷 목록 데이터
-  const formatOptions: { id: AudioFormat; title: string; desc: string; icon: any; color: string }[] = [
+  const formatOptions: {
+    id: AudioFormat;
+    title: string;
+    desc: string;
+    icon: any;
+    color: string;
+  }[] = [
     {
       id: 'dialog',
       title: '대화형 (Dialog)',
@@ -110,7 +137,14 @@ export default function CreatePodcastScreen() {
   ];
 
   // 음성 목록 데이터
-  const voiceOptions: { id: TtsVoice; title: string; desc: string; emoji: string; badge: string; voiceColor: string }[] = [
+  const voiceOptions: {
+    id: TtsVoice;
+    title: string;
+    desc: string;
+    emoji: string;
+    badge: string;
+    voiceColor: string;
+  }[] = [
     {
       id: 'professor',
       title: '교수',
@@ -151,22 +185,38 @@ export default function CreatePodcastScreen() {
         <Text style={styles.headerTitle}>팟캐스트 생성</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 1. 학습 자료 업로드 섹션 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. 학습 자료 업로드</Text>
-          <Text style={styles.sectionSubtitle}>팟캐스트의 기반이 될 학습 요약본, 논문, PDF 등을 업로드하세요.</Text>
+          <Text style={styles.sectionSubtitle}>
+            팟캐스트의 기반이 될 학습 요약본, 논문, PDF 등을 업로드하세요.
+          </Text>
 
           {!selectedFile ? (
             <Pressable
               onPress={handleSelectFile}
-              style={({ pressed }) => [styles.uploadZone, pressed && styles.uploadZonePressed]}
+              style={({ pressed }) => [
+                styles.uploadZone,
+                pressed && styles.uploadZonePressed,
+              ]}
             >
               <View style={styles.uploadIconContainer}>
-                <Ionicons name="cloud-upload-outline" size={32} color="#3B82F6" />
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={32}
+                  color="#3B82F6"
+                />
               </View>
-              <Text style={styles.uploadMainText}>자료 선택하여 업로드하기</Text>
-              <Text style={styles.uploadSubText}>PDF, TXT, 이미지 (최대 20MB)</Text>
+              <Text style={styles.uploadMainText}>
+                자료 선택하여 업로드하기
+              </Text>
+              <Text style={styles.uploadSubText}>
+                PDF, TXT, 이미지 (최대 20MB)
+              </Text>
             </Pressable>
           ) : (
             <View style={styles.fileCard}>
@@ -181,7 +231,10 @@ export default function CreatePodcastScreen() {
               </View>
               <Pressable
                 onPress={handleRemoveFile}
-                style={({ pressed }) => [styles.fileRemoveButton, pressed && styles.actionPressed]}
+                style={({ pressed }) => [
+                  styles.fileRemoveButton,
+                  pressed && styles.actionPressed,
+                ]}
               >
                 <Ionicons name="close" size={20} color="#64748B" />
               </Pressable>
@@ -192,7 +245,9 @@ export default function CreatePodcastScreen() {
         {/* 2. 팟캐스트 길이(시간) 섹션 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. 팟캐스트 재생 시간</Text>
-          <Text style={styles.sectionSubtitle}>학습 밀도와 출퇴근 시간에 딱 맞춘 오디오 분량을 조절해보세요.</Text>
+          <Text style={styles.sectionSubtitle}>
+            학습 밀도와 출퇴근 시간에 딱 맞춘 오디오 분량을 조절해보세요.
+          </Text>
 
           <View style={styles.durationRow}>
             {([5, 10, 20, 30] as DurationMin[]).map((m) => {
@@ -207,7 +262,12 @@ export default function CreatePodcastScreen() {
                     pressed && styles.actionPressed,
                   ]}
                 >
-                  <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
+                  <Text
+                    style={[
+                      styles.durationChipText,
+                      isSelected && styles.durationChipTextSelected,
+                    ]}
+                  >
                     {m}분
                   </Text>
                 </Pressable>
@@ -219,7 +279,9 @@ export default function CreatePodcastScreen() {
         {/* 3. 팟캐스트 포맷 설정 섹션 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>3. 팟캐스트 구성 포맷</Text>
-          <Text style={styles.sectionSubtitle}>자료를 어떤 형식의 오디오 연출로 구성할지 선택합니다.</Text>
+          <Text style={styles.sectionSubtitle}>
+            자료를 어떤 형식의 오디오 연출로 구성할지 선택합니다.
+          </Text>
 
           <View style={styles.formatList}>
             {formatOptions.map((opt) => {
@@ -228,9 +290,17 @@ export default function CreatePodcastScreen() {
                 <Pressable
                   key={opt.id}
                   onPress={() => setFormat(opt.id)}
-                  style={[styles.formatCard, isSelected && styles.formatCardSelected]}
+                  style={[
+                    styles.formatCard,
+                    isSelected && styles.formatCardSelected,
+                  ]}
                 >
-                  <View style={[styles.formatIconBg, { backgroundColor: opt.color + '15' }]}>
+                  <View
+                    style={[
+                      styles.formatIconBg,
+                      { backgroundColor: opt.color + '15' },
+                    ]}
+                  >
                     <Ionicons name={opt.icon} size={24} color={opt.color} />
                   </View>
                   <View style={styles.formatInfo}>
@@ -239,7 +309,11 @@ export default function CreatePodcastScreen() {
                   </View>
                   {isSelected && (
                     <View style={styles.selectedIndicator}>
-                      <Ionicons name="checkmark-circle" size={22} color="#3B82F6" />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={22}
+                        color="#3B82F6"
+                      />
                     </View>
                   )}
                 </Pressable>
@@ -251,7 +325,9 @@ export default function CreatePodcastScreen() {
         {/* 4. TTS 성격(TtsVoice) 설정 섹션 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>4. 스터디 캐스터 목소리 톤</Text>
-          <Text style={styles.sectionSubtitle}>오디오를 진행할 AI 캐스터의 스타일과 성격을 골라보세요.</Text>
+          <Text style={styles.sectionSubtitle}>
+            오디오를 진행할 AI 캐스터의 스타일과 성격을 골라보세요.
+          </Text>
 
           <View style={styles.voiceList}>
             {voiceOptions.map((opt) => {
@@ -260,23 +336,47 @@ export default function CreatePodcastScreen() {
                 <Pressable
                   key={opt.id}
                   onPress={() => setVoice(opt.id)}
-                  style={[styles.voiceCard, isSelected && styles.voiceCardSelected]}
+                  style={[
+                    styles.voiceCard,
+                    isSelected && styles.voiceCardSelected,
+                  ]}
                 >
-                  <View style={[styles.voiceAvatar, { backgroundColor: opt.voiceColor + '10' }]}>
+                  <View
+                    style={[
+                      styles.voiceAvatar,
+                      { backgroundColor: opt.voiceColor + '10' },
+                    ]}
+                  >
                     <Text style={styles.voiceEmoji}>{opt.emoji}</Text>
                   </View>
                   <View style={styles.voiceInfo}>
                     <View style={styles.voiceHeaderRow}>
                       <Text style={styles.voiceTitle}>{opt.title}</Text>
-                      <View style={[styles.voiceBadge, { backgroundColor: opt.voiceColor + '15' }]}>
-                        <Text style={[styles.voiceBadgeText, { color: opt.voiceColor }]}>{opt.badge}</Text>
+                      <View
+                        style={[
+                          styles.voiceBadge,
+                          { backgroundColor: opt.voiceColor + '15' },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.voiceBadgeText,
+                            { color: opt.voiceColor },
+                          ]}
+                        >
+                          {opt.badge}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.voiceDesc}>{opt.desc}</Text>
                   </View>
                   {isSelected && (
                     <View style={styles.selectedIndicator}>
-                      <Ionicons name="checkmark-circle" size={22} color="#3B82F6" />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={22}
+                        color="#3B82F6"
+                      />
                     </View>
                   )}
                 </Pressable>
@@ -301,10 +401,14 @@ export default function CreatePodcastScreen() {
         >
           {isSubmitting ? (
             <View style={styles.submittingContainer}>
-              <Text style={styles.createButtonText}>오디오 대본 및 구성 분석 중...</Text>
+              <Text style={styles.createButtonText}>
+                오디오 대본 및 구성 분석 중...
+              </Text>
             </View>
           ) : (
-            <Text style={styles.createButtonText}>나만의 AI 학습 팟캐스트 생성하기</Text>
+            <Text style={styles.createButtonText}>
+              나만의 AI 학습 팟캐스트 생성하기
+            </Text>
           )}
         </Pressable>
       </View>
