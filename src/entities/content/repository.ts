@@ -26,7 +26,7 @@ export const contentRepository = {
       })
       .catch((err) => {
         // 캐시로 표시 유지. 상위 Hook은 별도 에러 토스트를 띄울 수 있다.
-        // eslint-disable-next-line no-console
+         
         console.warn('[contentRepository] revalidate failed', err?.message);
       });
 
@@ -68,5 +68,12 @@ export const contentRepository = {
       createdAt: new Date().toISOString(),
     });
     return result;
+  },
+
+  // 새 노트북 생성 요청.
+  async create(title: string): Promise<Content> {
+    const fresh = await contentsApi.create(title);
+    mmkvStore.upsertContent(fresh);
+    return fresh;
   },
 };

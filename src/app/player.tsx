@@ -1,5 +1,5 @@
 import AudioPlayerScreen from '@/src/screens/AudioPlayerScreen';
 
-export default function PlayerTabScreen() {
+export default function PlayerScreen() {
   return <AudioPlayerScreen />;
 }

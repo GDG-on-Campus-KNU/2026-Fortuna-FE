@@ -27,4 +27,7 @@ export const contentsApi = {
     apiClient
       .post<GenerateContentResponse>('/generate', params)
       .then((r) => r.data),
+
+  create: (title: string) =>
+    apiClient.post<Content>('/contents', { title }).then((r) => r.data),
 };

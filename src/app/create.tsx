@@ -1,5 +1,5 @@
 import CreatePodcastScreen from '@/src/screens/CreatePodcastScreen';
 
-export default function CreateTabScreen() {
+export default function CreateRoute() {
   return <CreatePodcastScreen />;
 }

@@ -45,6 +45,30 @@ export function installMockAdapter(): void {
 
   mock.onDelete(/\/contents\/.+/).reply(204);
 
+  mock.onPost('/contents').reply((config) => {
+    try {
+      const { title } = JSON.parse(config.data || '{}');
+      const newId = `c_notebook_${Date.now()}`;
+      const newNotebook = {
+        id: newId,
+        userId: 'u_demo',
+        title: title || '새 노트북',
+        duration: 10 as const,
+        format: 'dialog' as const,
+        ttsVoice: 'friend' as const,
+        script:
+          '새로 생성된 노트북입니다. 자료를 업로드하고 팟캐스트를 생성해 보세요.',
+        audioUrl: null,
+        status: 'done' as const,
+        createdAt: new Date().toISOString(),
+      };
+      mockContents.unshift(newNotebook);
+      return [201, toSnakeContent(newNotebook)];
+    } catch {
+      return [400, { error: 'invalid_payload' }];
+    }
+  });
+
   mock.onPost('/generate').reply((config) => {
     try {
       const params = JSON.parse(config.data || '{}');
@@ -135,6 +159,6 @@ export function installMockAdapter(): void {
 
   mock.onGet('/api/v1/auth/me').reply(200, demoUser('demo@studycast.app'));
 
-  // eslint-disable-next-line no-console
+   
   console.log('[mockAdapter] installed — all axios requests are intercepted');
 }
