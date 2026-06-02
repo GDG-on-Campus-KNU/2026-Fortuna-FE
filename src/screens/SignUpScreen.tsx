@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Fonts, Palette } from '@/src/shared/constants/theme';
+import { useAuthForm } from '@/src/entities/auth';
 
 export default function SignUpScreen() {
   // 화면 모드: 'landing' (소셜/이메일 선택) | 'email' (이메일 상세 정보 입력)
@@ -42,7 +43,22 @@ export default function SignUpScreen() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
   // 가입 동작 및 결과 상태들
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submit, submitting, error, clearError } = useAuthForm('signup');
+
+  const onChangeEmail = (val: string) => {
+    if (error) clearError();
+    setEmail(val);
+  };
+
+  const onChangePassword = (val: string) => {
+    if (error) clearError();
+    setPassword(val);
+  };
+
+  const onChangeConfirmPassword = (val: string) => {
+    if (error) clearError();
+    setConfirmPassword(val);
+  };
 
   // 애니메이션 변수들
   const modeFadeAnim = useRef(new Animated.Value(1)).current; // 모드 트랜지션용 페이드
@@ -93,26 +109,14 @@ export default function SignUpScreen() {
 
   // 소셜 가입 모의 테스트
   const handleSocialSignUp = (provider: 'Google') => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      router.replace('/');
-    }, 1200);
+    if (submitting) return;
+    Alert.alert('소셜 회원가입', 'Google 회원가입을 진행합니다.');
   };
 
   // 이메일 회원가입 전송 핸들러
   const handleSignUp = () => {
-    if (!isFormValid || isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    // 모의 API 서버 가동 흉내
-    setTimeout(() => {
-      setIsSubmitting(false);
-      router.replace('/');
-    }, 1500);
+    if (!isFormValid || submitting) return;
+    submit({ email, password });
   };
 
   return (
@@ -161,7 +165,7 @@ export default function SignUpScreen() {
                   {/* Google 가입 버튼 */}
                   <Pressable
                     onPress={() => handleSocialSignUp('Google')}
-                    disabled={isSubmitting}
+                    disabled={submitting}
                     style={({ pressed }) => [
                       styles.socialButton,
                       pressed && styles.actionPressed,
@@ -185,7 +189,7 @@ export default function SignUpScreen() {
                   {/* 이메일 가입 버튼 */}
                   <Pressable
                     onPress={() => transitionToMode('email')}
-                    disabled={isSubmitting}
+                    disabled={submitting}
                     style={({ pressed }) => [
                       styles.socialButton,
                       pressed && styles.actionPressed,
@@ -207,7 +211,7 @@ export default function SignUpScreen() {
                 </View>
 
                 {/* 로딩 인디케이터 (소셜 로그인용) */}
-                {isSubmitting && (
+                {submitting && (
                   <ActivityIndicator
                     size="small"
                     color={Palette.primary}
@@ -284,7 +288,7 @@ export default function SignUpScreen() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={onChangeEmail}
                       onFocus={() => setFocusedInput('email')}
                       onBlur={() => setFocusedInput(null)}
                     />
@@ -316,7 +320,7 @@ export default function SignUpScreen() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       value={password}
-                      onChangeText={setPassword}
+                      onChangeText={onChangePassword}
                       onFocus={() => setFocusedInput('password')}
                       onBlur={() => setFocusedInput(null)}
                     />
@@ -360,7 +364,7 @@ export default function SignUpScreen() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       value={confirmPassword}
-                      onChangeText={setConfirmPassword}
+                      onChangeText={onChangeConfirmPassword}
                       onFocus={() => setFocusedInput('confirmPassword')}
                       onBlur={() => setFocusedInput(null)}
                     />
@@ -452,16 +456,19 @@ export default function SignUpScreen() {
 
               {/* 하단 고정 버튼 영역 */}
               <View style={styles.bottomButtonSection}>
+                {error ? (
+                  <Text style={styles.formErrorText}>{error}</Text>
+                ) : null}
                 <Pressable
                   onPress={handleSignUp}
-                  disabled={!isFormValid || isSubmitting}
+                  disabled={!isFormValid || submitting}
                   style={({ pressed }) => [
                     styles.signUpButton,
                     !isFormValid && styles.signUpButtonDisabled,
                     pressed && isFormValid && styles.signUpButtonPressed,
                   ]}
                 >
-                  {isSubmitting ? (
+                  {submitting ? (
                     <ActivityIndicator size="small" color={Palette.bgCard} />
                   ) : (
                     <Text style={styles.signUpButtonText}>계정 생성하기</Text>
@@ -798,9 +805,17 @@ const styles = StyleSheet.create({
     color: Palette.primary,
     fontFamily: Fonts.pretendardBold,
   },
+  formErrorText: {
+    fontSize: 13,
+    color: Palette.error,
+    marginBottom: 10,
+    fontWeight: '600',
+    fontFamily: Fonts.pretendardSemiBold,
+    textAlign: 'center',
+  },
   bottomButtonSection: {
     paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 24,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 32,
     paddingTop: 12,
     backgroundColor: Palette.bgPage,
   },

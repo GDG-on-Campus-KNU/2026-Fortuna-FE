@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Fonts, Palette } from '@/src/shared/constants/theme';
+import { useAuthForm } from '@/src/entities/auth';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -26,33 +27,35 @@ export default function SignInScreen() {
     null,
   );
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { submit, submitting, error, clearError } = useAuthForm('login');
+
+  const onChangeEmail = (val: string) => {
+    if (error) clearError();
+    setEmail(val);
+  };
+
+  const onChangePassword = (val: string) => {
+    if (error) clearError();
+    setPassword(val);
+  };
 
   // 이메일 정규식 유효성 검사
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isFormValid = isEmailValid && password.trim().length >= 6;
 
-  // 일반 이메일 로그인 시뮬레이션
+  // 일반 이메일 로그인
   const handleSignIn = () => {
-    if (!isFormValid || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      // 홈 화면으로 이동
-      router.replace('/');
-    }, 1200);
+    if (!isFormValid || submitting) return;
+    submit({ email, password });
   };
 
   // Google 소셜 로그인 시뮬레이션
   const handleGoogleSignIn = () => {
-    if (isSubmitting) return;
+    if (submitting) return;
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      router.replace('/');
-    }, 1000);
+    // 소셜 로그인 진행 중 표시
+    Alert.alert('소셜 로그인', 'Google 로그인을 진행합니다.');
   };
 
   const handleForgotPassword = () => {
@@ -119,7 +122,7 @@ export default function SignInScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={onChangeEmail}
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -150,7 +153,7 @@ export default function SignInScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={onChangePassword}
                   onFocus={() => setFocusedInput('password')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -178,17 +181,20 @@ export default function SignInScreen() {
             </View>
           </View>
 
+          {/* 에러 메시지 표시 */}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           {/* 로그인 버튼 */}
           <Pressable
             onPress={handleSignIn}
-            disabled={!isFormValid || isSubmitting}
+            disabled={!isFormValid || submitting}
             style={({ pressed }) => [
               styles.signInButton,
               !isFormValid && styles.signInButtonDisabled,
               pressed && isFormValid && styles.signInButtonPressed,
             ]}
           >
-            {isSubmitting ? (
+            {submitting ? (
               <ActivityIndicator size="small" color={Palette.bgCard} />
             ) : (
               <Text style={styles.signInButtonText}>로그인</Text>
@@ -205,7 +211,7 @@ export default function SignInScreen() {
           {/* Google 로그인 */}
           <Pressable
             onPress={handleGoogleSignIn}
-            disabled={isSubmitting}
+            disabled={submitting}
             style={({ pressed }) => [
               styles.googleButton,
               pressed && styles.actionPressed,
@@ -437,5 +443,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Palette.primary,
     fontFamily: Fonts.pretendardRegular,
+  },
+  errorText: {
+    fontSize: 13,
+    color: Palette.error,
+    marginTop: 8,
+    fontWeight: '600',
+    fontFamily: Fonts.pretendardSemiBold,
+    textAlign: 'center',
   },
 });
