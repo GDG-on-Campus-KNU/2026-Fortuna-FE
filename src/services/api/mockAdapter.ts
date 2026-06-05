@@ -10,10 +10,20 @@ import type { Job } from '@/src/entities/job/model';
 // 런타임 의존성은 한쪽 방향(entities → services)을 유지한다.
 const NETWORK_DELAY_MS = 800;
 
+// 실제 BE에 붙어 테스트할 때는 .env에 EXPO_PUBLIC_USE_MOCK=false 를 지정한다.
+// (미지정/그 외 값이면 기존처럼 mock 사용 → 팀원 기본 워크플로 불변)
+const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK !== 'false';
+
 let installed = false;
 
 export function installMockAdapter(): void {
   if (installed || !__DEV__) return;
+  if (!USE_MOCK) {
+    console.log(
+      '[mockAdapter] disabled (EXPO_PUBLIC_USE_MOCK=false) — 실제 BE로 요청합니다',
+    );
+    return;
+  }
   installed = true;
 
   const mock = new MockAdapter(apiClient, { delayResponse: NETWORK_DELAY_MS });
@@ -159,6 +169,5 @@ export function installMockAdapter(): void {
 
   mock.onGet('/api/v1/auth/me').reply(200, demoUser('demo@studycast.app'));
 
-   
   console.log('[mockAdapter] installed — all axios requests are intercepted');
 }

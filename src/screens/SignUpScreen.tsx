@@ -10,8 +10,6 @@ import {
   Text,
   TextInput,
   View,
-  Image,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -108,11 +106,8 @@ export default function SignUpScreen() {
     }
   };
 
-  // 소셜 가입 모의 테스트
-  const handleSocialSignUp = (provider: 'Google') => {
-    if (submitting) return;
-    Alert.alert('소셜 회원가입', 'Google 회원가입을 진행합니다.');
-  };
+  // Google 소셜 회원가입은 P1으로 보류(Firebase 제거 → 추후 FastAPI OAuth).
+  // MVP에서는 버튼을 숨겨 깨진 동작이 노출되지 않게 한다.
 
   // 이메일 회원가입 전송 핸들러
   const handleSignUp = () => {
@@ -157,36 +152,12 @@ export default function SignUpScreen() {
                 <View style={styles.landingTitleBox}>
                   <Text style={styles.landingTitle}>계정 만들기</Text>
                   <Text style={styles.landingSubtitle}>
-                    소셜 계정으로 빠르게 시작하세요
+                    이메일로 빠르게 시작하세요
                   </Text>
                 </View>
 
-                {/* 가입 버튼 모음 */}
+                {/* 가입 버튼 모음 (Google 소셜 가입은 P1 보류로 MVP에서 숨김) */}
                 <View style={styles.socialBtnGroup}>
-                  {/* Google 가입 버튼 */}
-                  <Pressable
-                    onPress={() => handleSocialSignUp('Google')}
-                    disabled={submitting}
-                    style={({ pressed }) => [
-                      styles.socialButton,
-                      pressed && styles.actionPressed,
-                    ]}
-                  >
-                    <View style={styles.socialBtnContent}>
-                      <View style={styles.googleIconContainer}>
-                        <Image
-                          source={{
-                            uri: 'https://developers.google.com/identity/images/g-logo.png',
-                          }}
-                          style={{ width: 20, height: 20 }}
-                        />
-                      </View>
-                      <Text style={styles.socialButtonText}>
-                        Google 계정으로 계속하기
-                      </Text>
-                    </View>
-                  </Pressable>
-
                   {/* 이메일 가입 버튼 */}
                   <Pressable
                     onPress={() => transitionToMode('email')}
