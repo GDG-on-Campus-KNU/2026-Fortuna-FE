@@ -500,11 +500,6 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Palette.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
   },
   logoImage: {
     width: '100%',
