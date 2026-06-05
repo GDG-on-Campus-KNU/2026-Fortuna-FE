@@ -181,7 +181,7 @@ export default function HomeScreen() {
               style={{ opacity: 0.9 }}
             />
           </View>
-          <Text style={(styles.addCardText, { paddingEnd: 8 })}>새 노트북</Text>
+          <Text style={[styles.addCardText, { paddingEnd: 8 }]}>새 노트북</Text>
         </Pressable>
       );
     }
