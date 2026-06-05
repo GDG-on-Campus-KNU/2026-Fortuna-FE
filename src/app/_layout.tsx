@@ -1,16 +1,10 @@
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
+  authRepository,
+  installAuthInterceptor,
+  useAuth,
+} from '@/src/entities/auth';
+import { apiClient, BASE_URL, installMockAdapter } from '@/src/services/api';
 import { useColorScheme } from '@/src/shared/hooks/use-color-scheme';
-import { installMockAdapter } from '@/src/services/api';
 import {
   GoogleSansFlex_100Thin,
   GoogleSansFlex_200ExtraLight,
@@ -23,10 +17,23 @@ import {
   GoogleSansFlex_900Black,
 } from '@expo-google-fonts/google-sans-flex';
 import {
-  authRepository,
-  installAuthInterceptor,
-  useAuth,
-} from '@/src/entities/auth';
+  getRemoteConfig,
+  setDefaults,
+  setConfigSettings,
+  fetchAndActivate,
+  getValue,
+} from '@react-native-firebase/remote-config';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from '@react-navigation/native';
+import { useFonts } from 'expo-font';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import 'react-native-reanimated';
 
 // 개발 모드(__DEV__)에서 모의 API 서버가 가동되도록 셋업합니다.
 installMockAdapter();
@@ -60,11 +67,8 @@ function useProtectedRoute() {
   }, [status, segments, router]);
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  useProtectedRoute();
-
-  const [loaded, error] = useFonts({
+function useAppFonts() {
+  return useFonts({
     'GoogleSansFlex-100': GoogleSansFlex_100Thin,
     'GoogleSansFlex-200': GoogleSansFlex_200ExtraLight,
     'GoogleSansFlex-300': GoogleSansFlex_300Light,
@@ -84,6 +88,52 @@ export default function RootLayout() {
     'Pretendard-SemiBold': require('../../assets/fonts/Pretendard-SemiBold.otf'),
     'Pretendard-Thin': require('../../assets/fonts/Pretendard-Thin.otf'),
   });
+}
+
+function useInitializeRemoteConfig() {
+  useEffect(() => {
+    const setupRemoteConfig = async () => {
+      try {
+        const rc = getRemoteConfig();
+
+        // Remote Config 기본값 설정
+        await setDefaults(rc, {
+          api_base_url: BASE_URL,
+        });
+
+        // 개발 환경에서는 캐시 타임을 0으로 설정하여 즉시 반영되도록 처리
+        if (__DEV__) {
+          await setConfigSettings(rc, {
+            minimumFetchIntervalMillis: 0,
+          });
+        }
+
+        // 최신 원격 설정 가져오기 및 활성화
+        await fetchAndActivate(rc);
+
+        // Remote Config에서 api_base_url 값을 읽어와 Axios apiClient의 baseURL 업데이트
+        const apiBaseUrl = getValue(rc, 'api_base_url').asString();
+        if (apiBaseUrl) {
+          apiClient.defaults.baseURL = apiBaseUrl;
+          console.log(`Axios baseURL dynamic update: ${apiBaseUrl}`);
+        }
+        console.log('Firebase Remote Config initialized successfully.');
+      } catch (err) {
+        console.error('Failed to initialize Firebase Remote Config:', err);
+      }
+    };
+
+    void setupRemoteConfig();
+  }, []);
+}
+
+export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  useProtectedRoute();
+
+  const [loaded, error] = useAppFonts();
+  useInitializeRemoteConfig();
+
   useEffect(() => {
     if (loaded || error) {
       SplashScreen.hideAsync().catch((err) => {
@@ -91,6 +141,7 @@ export default function RootLayout() {
       });
     }
   }, [loaded, error]);
+
   if (!loaded && !error) {
     return null;
   }
