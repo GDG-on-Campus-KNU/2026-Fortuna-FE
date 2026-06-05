@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { authRepository } from '@/src/entities/auth';
 import { useContents } from '@/src/entities/content/hooks';
 import type {
   AudioFormat,
@@ -30,7 +31,6 @@ import type {
 import { contentRepository } from '@/src/entities/content/repository';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
-import { authRepository } from '@/src/entities/auth';
 
 const { width } = Dimensions.get('window');
 const CARD_MARGIN = 12;
@@ -90,7 +90,7 @@ export default function HomeScreen() {
       case 'friend':
         return { label: '친구', emoji: '🧑‍🤝‍🧑' };
       case 'coach':
-        return { label: '도전(화난)', emoji: '🔥' };
+        return { label: '스파르타', emoji: '🔥' };
       case 'whisper':
         return { label: '속삭임', emoji: '🤫' };
       default:
@@ -189,7 +189,6 @@ export default function HomeScreen() {
     // 일반 노트북 카드
     const isDone = item.status === 'done';
     const isGenerating = item.status === 'generating';
-    const mockDate = '2026. 5. 26.';
 
     return (
       <Pressable
@@ -222,7 +221,9 @@ export default function HomeScreen() {
               <Text style={styles.statusTextGenerating}>생성 중</Text>
             </View>
           ) : isDone ? (
-            <Text style={styles.notebookDate}>{mockDate}</Text>
+            <Text style={styles.notebookDate}>
+              {new Date(item.createdAt).toLocaleDateString('ko-KR')}
+            </Text>
           ) : (
             <View style={styles.statusRow}>
               <Ionicons name="alert-circle" size={14} color={Palette.error} />
@@ -235,8 +236,12 @@ export default function HomeScreen() {
   };
 
   // 기존 콘텐츠 목록 뒤에 "+ 새 노트북" 카드를 추가해 그리드 데이터 생성
+  const sortedContents = [...(contents || [])].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   const gridData: GridItem[] = [
-    ...(contents || []),
+    ...sortedContents,
     { id: 'add-new-notebook', isAddCard: true },
   ];
 

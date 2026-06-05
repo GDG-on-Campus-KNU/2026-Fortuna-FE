@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
   View,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { useContent } from '@/src/entities/content/hooks';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
@@ -151,7 +151,7 @@ export default function NotebookDetailScreen({
               : notebook.ttsVoice === 'friend'
                 ? '친구'
                 : notebook.ttsVoice === 'coach'
-                  ? '도전(화난)'
+                  ? '스파르타'
                   : '속삭임',
           ttsVoice: notebook.ttsVoice,
           iconName: 'document-text-outline',
