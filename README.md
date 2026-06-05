@@ -10,38 +10,40 @@
 
 ## 핵심 기능
 
-| # | 기능 | 설명 |
-|---|---|---|
-| 1 | 시간별 학습 밀도 자동 조절 | 5 / 10 / 20 / 30분 분량 자동 생성 |
-| 2 | 맞춤형 학습 포맷 | 스토리텔링 · 퀴즈 · 대화식 |
-| 3 | 오디오 플레이어 | 챕터 이동 · 구간 반복 · 0.75x ~ 2x 속도 · 오프라인 |
-| 4 | 다양한 성격의 TTS | 친구형 · 교수형 · 코치형 |
-| 5 | 사용자 자료 기반 스크립트 생성 | PDF / TXT 업로드, 출제 경향 반영 |
-| 6 | 암기 최적화 노래 변환 | 핵심 암기 내용을 노래로 |
+| #   | 기능                           | 설명                                               |
+| --- | ------------------------------ | -------------------------------------------------- |
+| 1   | 시간별 학습 밀도 자동 조절     | 5 / 10 / 20 / 30분 분량 자동 생성                  |
+| 2   | 맞춤형 학습 포맷               | 스토리텔링 · 퀴즈 · 대화식                         |
+| 3   | 오디오 플레이어                | 챕터 이동 · 구간 반복 · 0.75x ~ 2x 속도 · 오프라인 |
+| 4   | 다양한 성격의 TTS              | 친구형 · 교수형 · 코치형                           |
+| 5   | 사용자 자료 기반 스크립트 생성 | PDF / TXT 업로드, 출제 경향 반영                   |
+| 6   | 암기 최적화 노래 변환          | 핵심 암기 내용을 노래로                            |
 
 ---
 
 ## 팀 구성 & 담당
 
-| 이름 | 역할 | 담당 영역 | GitHub |
-|---|---|---|---|
-| 정희균 | AN (팀장) | 오디오 플레이어 | [@Segyun](https://github.com/Segyun) |
-| 전현준 | AN | 데이터 모델 (저장·불러오기) | [@conny3233](https://github.com/conny3233) |
-| 안소민 | AN | UI 디자인 / 화면 | [@somin320](https://github.com/somin320) |
-| 박채빈 | BE | 프롬프트 작업 · 파이프라인 | [@looksambrook](https://github.com/looksambrook) |
+| 이름   | 역할      | 담당 영역                   | GitHub                                           |
+| ------ | --------- | --------------------------- | ------------------------------------------------ |
+| 정희균 | AN (팀장) | 오디오 플레이어             | [@Segyun](https://github.com/Segyun)             |
+| 전현준 | AN        | 데이터 모델 (저장·불러오기) | [@conny3233](https://github.com/conny3233)       |
+| 안소민 | AN        | UI 디자인 / 화면            | [@somin320](https://github.com/somin320)         |
+| 박채빈 | BE        | 프롬프트 작업 · 파이프라인  | [@looksambrook](https://github.com/looksambrook) |
 
 ---
 
 ## 기술 스택
 
 ### Frontend
+
 - **React Native (Expo SDK 54)** · TypeScript · Expo Router (file-based routing)
 - **상태 관리**: Zustand · @tanstack/react-query
 - **로컬 저장소**: `react-native-mmkv` (빠른 KV)
 - **HTTP**: Axios (snake_case → camelCase 인터셉터)
-- **오디오**: `expo-av`
+- **오디오**: `expo-audio`
 
 ### Backend
+
 - **FastAPI** (Async) · PostgreSQL + pgvector
 - **AI**: Google Gemini 3 Flash (스크립트) · Gemini 3.1 Flash TTS · Suno v4 / Lyria 3 (노래)
 - **인프라**: Google Cloud Run · Firebase Auth & FCM · Cloud Storage (Signed URL)
@@ -145,10 +147,10 @@ Repository (전현준 — contentRepository, …)
 
 ```ts
 import {
-  useContents,        // 콘텐츠 목록
-  useContent,         // 단일 콘텐츠 상세
-  usePreferences,     // 사용자 설정
-  useJobPolling,      // 생성 작업 폴링 (1s → 3s 백오프)
+  useContents, // 콘텐츠 목록
+  useContent, // 단일 콘텐츠 상세
+  usePreferences, // 사용자 설정
+  useJobPolling, // 생성 작업 폴링 (1s → 3s 백오프)
 } from '@/src/entities';
 ```
 
@@ -170,21 +172,21 @@ await useAudioStore.getState().init(track);
 
 ```ts
 export type ContentStatus = 'pending' | 'generating' | 'done' | 'failed';
-export type AudioFormat   = 'dialog' | 'quiz' | 'story';
-export type TtsVoice      = 'friend' | 'professor' | 'coach';
-export type DurationMin   = 5 | 10 | 20 | 30;
+export type AudioFormat = 'dialog' | 'quiz' | 'story';
+export type TtsVoice = 'friend' | 'professor' | 'coach';
+export type DurationMin = 5 | 10 | 20 | 30;
 
 export interface Content {
   id: string;
   userId: string;
   title: string;
-  duration: DurationMin;      // 분
+  duration: DurationMin; // 분
   format: AudioFormat;
   ttsVoice: TtsVoice;
   script: string;
-  audioUrl: string | null;    // Cloud Storage Signed URL
+  audioUrl: string | null; // Cloud Storage Signed URL
   status: ContentStatus;
-  createdAt: string;          // ISO8601
+  createdAt: string; // ISO8601
 }
 ```
 
@@ -195,7 +197,7 @@ export interface Content {
 ## 캐싱 전략 — Stale-While-Revalidate
 
 ```ts
-contentRepository.listWithRevalidate((fresh) => render(fresh))
+contentRepository.listWithRevalidate((fresh) => render(fresh));
 ```
 
 1. MMKV 캐시를 **즉시 반환** → 사용자는 곧바로 화면을 본다
@@ -209,14 +211,14 @@ contentRepository.listWithRevalidate((fresh) => render(fresh))
 
 ## 백엔드 API 계약 (박채빈 확정 전 가정안)
 
-| Method | Path | 설명 |
-|---|---|---|
-| `POST` | `/contents/upload` | 자료 파일(PDF/TXT) 업로드 |
-| `POST` | `/generate` | 콘텐츠 생성 요청 → `{ jobId, contentId }` |
-| `GET`  | `/jobs/{id}` | 작업 상태 폴링 |
-| `GET`  | `/contents` | 내 콘텐츠 목록 |
-| `GET`  | `/contents/{id}` | 콘텐츠 상세 |
-| `DELETE` | `/contents/{id}` | 콘텐츠 삭제 |
+| Method   | Path               | 설명                                      |
+| -------- | ------------------ | ----------------------------------------- |
+| `POST`   | `/contents/upload` | 자료 파일(PDF/TXT) 업로드                 |
+| `POST`   | `/generate`        | 콘텐츠 생성 요청 → `{ jobId, contentId }` |
+| `GET`    | `/jobs/{id}`       | 작업 상태 폴링                            |
+| `GET`    | `/contents`        | 내 콘텐츠 목록                            |
+| `GET`    | `/contents/{id}`   | 콘텐츠 상세                               |
+| `DELETE` | `/contents/{id}`   | 콘텐츠 삭제                               |
 
 응답은 모두 JSON. snake_case 필드는 axios 응답 인터셉터에서 camelCase 로 자동 변환됩니다.
 
