@@ -1,4 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useJobPolling } from '@/src/entities';
+import type {
+  AudioFormat,
+  DurationMin,
+  TtsVoice,
+} from '@/src/entities/content/model';
+import { contentRepository } from '@/src/entities/content/repository';
+import { Fonts, Palette } from '@/src/shared/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -10,22 +20,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useJobPolling } from '@/src/entities';
-import type {
-  AudioFormat,
-  DurationMin,
-  TtsVoice,
-} from '@/src/entities/content/model';
-import { contentRepository } from '@/src/entities/content/repository';
-import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 const RECOMMENDATIONS = [
   '알고리즘 기말고사 대비',
   '그래프와 트리의 차이',
   'BFS 개념 복습',
 ];
+
+// 실제 진행률(0~100)을 로딩 단계(1~3)로 변환
+const progressToStage = (progress: number): 1 | 2 | 3 => {
+  if (progress >= 66) return 3;
+  if (progress >= 33) return 2;
+  return 1;
+};
 
 export default function CreatePodcastScreen() {
   // Wizard flow step: 1 | 2 | 3 | 4 | 5
@@ -66,6 +73,10 @@ export default function CreatePodcastScreen() {
       timersRef.current.forEach(clearTimeout);
       Alert.alert('오류', '팟캐스트 생성에 실패했어요. 다시 시도해 주세요.');
       setStep(4);
+    } else if (typeof job.progress === 'number') {
+      // 생성 진행 중: 실제 진행률에 맞춰 단계 갱신 (뒤로 가지 않게 앞으로만)
+      const stage = progressToStage(job.progress);
+      setLoadingStage((prev) => (stage > prev ? stage : prev));
     }
   }, [job]);
 
@@ -119,9 +130,18 @@ export default function CreatePodcastScreen() {
     setLoadingStage(1);
 
     // Simulate progress updates
-    const t1 = setTimeout(() => setLoadingStage(2), 1800);
-    const t2 = setTimeout(() => setLoadingStage(3), 3600);
-    const t3 = setTimeout(() => setLoadingStage(4), 5400);
+    // 진행률을 못 받을 때 대비한 연출 (완료 단계는 실제 job done일 때만)
+    const t1 = setTimeout(
+      () => setLoadingStage((prev) => (prev < 2 ? 2 : prev)),
+      1800,
+    );
+    const t2 = setTimeout(
+      () => setLoadingStage((prev) => (prev < 3 ? 3 : prev)),
+      3600,
+    );
+
+    // 폴백 연출 타이머 등록
+    timersRef.current = [t1, t2];
 
     const virtualFile = {
       name: `${topic.trim()}.pdf`,
@@ -152,7 +172,7 @@ export default function CreatePodcastScreen() {
       setJobId(result.jobId);
 
       // 로딩 스테이지 연출 타이머 작동
-      timersRef.current = [t1, t2, t3];
+      timersRef.current = [t1, t2];
     } catch (err) {
       // Clear timers and reset
       timersRef.current.forEach(clearTimeout);
