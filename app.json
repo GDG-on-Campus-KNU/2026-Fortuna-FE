@@ -13,7 +13,7 @@
       "infoPlist": {
         "UIBackgroundModes": ["audio"]
       },
-      "bundleIdentifier": "com.anonymous.x2026FortunaFE"
+      "bundleIdentifier": "com.fortuna.studycast"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.x2026FortunaFE"
+      "package": "com.fortuna.studycast"
     },
     "web": {
       "output": "static",
