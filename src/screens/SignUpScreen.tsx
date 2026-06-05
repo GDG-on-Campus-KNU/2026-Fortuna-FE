@@ -10,6 +10,7 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -141,7 +142,10 @@ export default function SignUpScreen() {
               {/* 상단 로고 영역 */}
               <View style={styles.logoSection}>
                 <View style={styles.appIconBadge}>
-                  <Ionicons name="school" size={32} color={Palette.bgCard} />
+                  <Image
+                    source={require('../../assets/images/icon.png')}
+                    style={styles.logoImage}
+                  />
                 </View>
                 <Text style={styles.brandTitle}>Studycast</Text>
               </View>
@@ -501,6 +505,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 3,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
   },
   brandTitle: {
     fontSize: 40,
