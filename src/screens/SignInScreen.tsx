@@ -28,7 +28,7 @@ export default function SignInScreen() {
   );
   const [showPassword, setShowPassword] = useState(false);
 
-  const { submit, submitting, error, clearError } = useAuthForm('login');
+  const { submit, submitting, error, clearError } = useAuthForm('signIn');
 
   const onChangeEmail = (val: string) => {
     if (error) clearError();
@@ -62,7 +62,7 @@ export default function SignInScreen() {
   };
 
   const handleNavigateToSignUp = () => {
-    router.push('/signup');
+    router.push('/signUp');
   };
 
   return (

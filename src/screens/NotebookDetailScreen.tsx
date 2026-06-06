@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -8,13 +9,19 @@ import {
   FlatList,
   Image,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useContent } from '@/src/entities/content/hooks';
+import {
+  useNotebook,
+  notebookRepository,
+  type Podcast,
+  type Source,
+} from '@/src/entities';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
 
@@ -42,21 +49,17 @@ interface FileItem {
   size: string;
 }
 
-const getLocalAudioUri = (module: any) => {
-  try {
-    const source = Image.resolveAssetSource(module);
-    return source ? source.uri : '';
-  } catch (err) {
-    console.warn('[NotebookDetailScreen] Failed to resolve asset source', err);
-    return '';
-  }
-};
-
 export default function NotebookDetailScreen({
   id,
 }: NotebookDetailScreenProps) {
-  // Fetch current notebook metadata using existing hook
-  const { data: notebook, loading, error } = useContent(id);
+  // Fetch current notebook metadata using new hook
+  const {
+    data: notebook,
+    loading,
+    error,
+    refresh,
+    refreshing,
+  } = useNotebook(id);
   const initAudio = useAudioStore((state) => state.init);
 
   // States
@@ -65,129 +68,50 @@ export default function NotebookDetailScreen({
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isAddingFile, setIsAddingFile] = useState(false);
 
-  // Load sample audios for simulated playback
-  const sampleAudio1 = getLocalAudioUri(
-    require('../../assets/audios/Sample-1.wav'),
-  );
-  const sampleAudio2 = getLocalAudioUri(
-    require('../../assets/audios/Sample-2.wav'),
-  );
-  const sampleAudio3 = getLocalAudioUri(
-    require('../../assets/audios/Sample-3.wav'),
-  );
-  const sampleAudio4 = getLocalAudioUri(
-    require('../../assets/audios/Sample-4.wav'),
-  );
+  const getFormatLabel = (format: string) => {
+    if (format === 'dialog') return '대화식 팟캐스트';
+    if (format === 'quiz') return '퀴즈 팟캐스트';
+    return '스토리텔링 팟캐스트';
+  };
+
+  const getVoiceLabel = (voice: string) => {
+    if (voice === 'professor') return '교수';
+    if (voice === 'friend') return '친구';
+    if (voice === 'coach') return '스파르타';
+    return '속삭임';
+  };
 
   // Initialize data based on notebook loaded
   useEffect(() => {
     if (!notebook) return;
 
-    const title = notebook.title;
+    setLessons(
+      (notebook.podcasts || []).map((p) => ({
+        id: p.id,
+        title: p.title,
+        duration: p.duration,
+        voiceLabel: getVoiceLabel(p.ttsVoice),
+        ttsVoice: p.ttsVoice,
+        iconName:
+          p.format === 'dialog'
+            ? 'bulb-outline'
+            : p.format === 'quiz'
+              ? 'help-circle-outline'
+              : 'book-outline',
+        audioUrl: p.audioUrl || '',
+        description: p.script,
+        formatLabel: getFormatLabel(p.format),
+      })),
+    );
 
-    // Check if notebook matches "알고리즘" or similar algorithm topics
-    if (
-      title.includes('알고리즘') ||
-      title.includes('Tree') ||
-      id.includes('demo')
-    ) {
-      // 1. Library (Lessons) List according to node 302-508
-      setLessons([
-        {
-          id: `${id}_lesson_1`,
-          title: 'Tree',
-          duration: 15,
-          voiceLabel: '교수',
-          ttsVoice: 'professor',
-          iconName: 'bulb-outline', // batch_prediction equivalent
-          audioUrl: sampleAudio1,
-          description:
-            '트리 자료구조의 정의, 노드와 엣지의 성질, 이진 탐색 트리 요약 핵심 강의입니다.',
-          formatLabel: '대화식 팟캐스트',
-        },
-        {
-          id: `${id}_lesson_2`,
-          title: 'Graph',
-          duration: 20,
-          voiceLabel: '친구',
-          ttsVoice: 'friend',
-          iconName: 'git-network-outline', // graph_3 equivalent
-          audioUrl: sampleAudio2,
-          description:
-            '인접 행렬과 인접 리스트의 차이, 그래프 기초 이론에 대해 친구 톤으로 재미있게 해설합니다.',
-          formatLabel: '스토리텔링 팟캐스트',
-        },
-        {
-          id: `${id}_lesson_3`,
-          title: 'BFS/DFS',
-          duration: 10,
-          voiceLabel: '속삭임',
-          ttsVoice: 'whisper',
-          iconName: 'git-branch-outline', // graph_4 equivalent
-          audioUrl: sampleAudio4,
-          description:
-            '너비 우선 탐색과 깊이 우선 탐색의 동작 프로세스를 ASMR 톤으로 수면 복습용 요약 강의합니다.',
-          formatLabel: '속삭임 팟캐스트',
-        },
-      ]);
-
-      // 2. Files List according to node 302-630
-      setFiles([
-        { id: 'f_1', name: '15-다익스트라_알고리즘.pdf', size: '2.3 MB' },
-        { id: 'f_2', name: '16-그래프.pdf', size: '1.9 MB' },
-        { id: 'f_3', name: '17-트리.pdf', size: '3.1 MB' },
-      ]);
-    } else {
-      // Create customized dataset based on custom notebook title
-      const cleanTitle = title.replace(/\s*\(AI.*?\)\s*/g, '');
-      setLessons([
-        {
-          id: `${id}_lesson_custom_1`,
-          title: `${cleanTitle} 핵심 요약`,
-          duration: notebook.duration || 10,
-          voiceLabel:
-            notebook.ttsVoice === 'professor'
-              ? '교수'
-              : notebook.ttsVoice === 'friend'
-                ? '친구'
-                : notebook.ttsVoice === 'coach'
-                  ? '스파르타'
-                  : '속삭임',
-          ttsVoice: notebook.ttsVoice,
-          iconName: 'document-text-outline',
-          audioUrl: notebook.audioUrl || sampleAudio1,
-          description:
-            notebook.script || 'AI가 생성한 고품격 맞춤 요약 팟캐스트입니다.',
-          formatLabel:
-            notebook.format === 'dialog'
-              ? '대화식 팟캐스트'
-              : notebook.format === 'quiz'
-                ? '퀴즈 팟캐스트'
-                : '스토리텔링 팟캐스트',
-        },
-        {
-          id: `${id}_lesson_custom_2`,
-          title: `${cleanTitle} 심층 분석`,
-          duration: (notebook.duration || 10) + 5,
-          voiceLabel: '교수',
-          ttsVoice: 'professor',
-          iconName: 'bulb-outline',
-          audioUrl: sampleAudio3,
-          description: '추가 학습을 위한 확장 핵심 분석 팟캐스트입니다.',
-          formatLabel: '대화식 팟캐스트',
-        },
-      ]);
-
-      setFiles([
-        {
-          id: 'f_c1',
-          name: `${cleanTitle}_기말고사_핵심요약.pdf`,
-          size: '2.4 MB',
-        },
-        { id: 'f_c2', name: `${cleanTitle}_참고자료.pdf`, size: '1.8 MB' },
-      ]);
-    }
-  }, [notebook, id, sampleAudio1, sampleAudio2, sampleAudio3, sampleAudio4]);
+    setFiles(
+      (notebook.sources || []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        size: '1.5 MB',
+      })),
+    );
+  }, [notebook]);
 
   // Back Button Press
   const handleBack = () => {
@@ -208,7 +132,7 @@ export default function NotebookDetailScreen({
     const track: AudioTrack = {
       id: item.id,
       url: item.audioUrl,
-      title: `${notebook?.title.replace(/\s*\(AI.*?\)\s*/g, '') || '노트북'} · ${item.title}`,
+      title: `${item.title}`,
       artist: `${item.voiceLabel} 톤 · StudyCast`,
       album: item.formatLabel,
       duration: item.duration * 60,
@@ -216,9 +140,14 @@ export default function NotebookDetailScreen({
     };
 
     try {
-      await initAudio(track);
+      const isActiveRequest = await initAudio(track);
+      if (!isActiveRequest) return;
+
       const state = useAudioStore.getState();
-      if (state.playbackState !== 'playing') {
+      if (
+        state.activeTrack?.id === track.id &&
+        state.playbackState !== 'playing'
+      ) {
         await state.togglePlayback();
       }
       router.push('/player');
@@ -238,8 +167,13 @@ export default function NotebookDetailScreen({
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => {
-            setFiles((prev) => prev.filter((f) => f.id !== fileId));
+          onPress: async () => {
+            try {
+              await notebookRepository.removeSource(id, fileId);
+              setFiles((prev) => prev.filter((f) => f.id !== fileId));
+            } catch (err) {
+              console.error('Failed to delete file:', err);
+            }
           },
         },
       ],
@@ -248,38 +182,52 @@ export default function NotebookDetailScreen({
 
   // Create new podcast CTA
   const handleCreateNewPodcast = () => {
-    router.push('/create');
+    router.push({ pathname: '/create', params: { notebookId: id } });
   };
 
   // Add new file simulator (simulating document picker)
-  const handleAddNewFile = () => {
-    setIsAddingFile(true);
+  const handleAddNewFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'text/plain'],
+        copyToCacheDirectory: true,
+      });
 
-    // Simulate loading delay (800ms)
-    setTimeout(() => {
-      setIsAddingFile(false);
-      const dummyFileNames = [
-        '18-해시_테이블.pdf',
-        '19-동적_계획법.pdf',
-        '20-정렬_알고리즘.pdf',
-        '시스템_설계_요약.pdf',
-      ];
-      const randomName =
-        dummyFileNames[Math.floor(Math.random() * dummyFileNames.length)];
-      const randomSize = `${(Math.random() * 2 + 1.2).toFixed(1)} MB`;
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      setIsAddingFile(true);
+
+      const addedSource = await notebookRepository.addSource(
+        id,
+        asset.uri,
+        asset.name,
+        asset.mimeType || 'application/octet-stream',
+      );
+
+      const fileSizeMB = asset.size
+        ? `${(asset.size / (1024 * 1024)).toFixed(1)} MB`
+        : '1.5 MB';
 
       const newFile: FileItem = {
-        id: `f_new_${Date.now()}`,
-        name: randomName,
-        size: randomSize,
+        id: addedSource.id,
+        name: addedSource.name,
+        size: fileSizeMB,
       };
 
       setFiles((prev) => [...prev, newFile]);
       Alert.alert(
         '업로드 완료',
-        `'${randomName}' 자료가 노트북 파일 목록에 성공적으로 업로드되었습니다.`,
+        `'${asset.name}' 자료가 노트북 파일 목록에 성공적으로 업로드되었습니다.`,
       );
-    }, 800);
+    } catch (err) {
+      console.error('Failed to upload file:', err);
+      Alert.alert('오류', '파일 업로드에 실패했습니다.');
+    } finally {
+      setIsAddingFile(false);
+    }
   };
 
   // Loading Screen
@@ -444,6 +392,14 @@ export default function NotebookDetailScreen({
             ItemSeparatorComponent={() => <View style={styles.divider} />}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refresh}
+                tintColor={Palette.primary}
+                colors={[Palette.primary]}
+              />
+            }
           />
         ) : (
           <FlatList
@@ -453,6 +409,14 @@ export default function NotebookDetailScreen({
             ItemSeparatorComponent={() => <View style={styles.divider} />}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refresh}
+                tintColor={Palette.primary}
+                colors={[Palette.primary]}
+              />
+            }
           />
         )}
       </View>

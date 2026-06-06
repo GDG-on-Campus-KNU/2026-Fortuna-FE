@@ -1,4 +1,5 @@
-import type { Content } from '@/src/entities/content/model';
+import type { Podcast } from '@/src/entities/podcast/model';
+import type { Notebook } from '@/src/entities/notebook/model';
 import type { UserPreferences } from '@/src/entities/preferences/model';
 import type { OfflineEntry } from '@/src/entities/offline/model';
 
@@ -27,12 +28,15 @@ try {
       memoryStore.clear();
     },
   };
-  // eslint-disable-next-line no-console
-  console.warn('[Storage] Native NitroModules/MMKV not found. Switched to secure in-memory store.');
+   
+  console.warn(
+    '[Storage] Native NitroModules/MMKV not found. Switched to secure in-memory store.',
+  );
 }
 
 const KEY = {
-  contents: 'cache:contents',
+  podcasts: 'cache:podcasts',
+  notebooks: 'cache:notebooks',
   preferences: 'pref:user',
   offlineMap: 'offline:map',
 } as const;
@@ -54,19 +58,34 @@ function writeJson(key: string, value: unknown): void {
 }
 
 export const mmkvStore = {
-  // ── Contents ─────────────────────────────────────────────
-  getContents(): Content[] {
-    return readJson<Content[]>(KEY.contents, []);
+  // ── Podcasts ─────────────────────────────────────────────
+  getPodcasts(): Podcast[] {
+    return readJson<Podcast[]>(KEY.podcasts, []);
   },
-  setContents(list: Content[]): void {
-    writeJson(KEY.contents, list);
+  setPodcasts(list: Podcast[]): void {
+    writeJson(KEY.podcasts, list);
   },
-  upsertContent(c: Content): void {
-    const rest = this.getContents().filter((x) => x.id !== c.id);
-    this.setContents([c, ...rest]);
+  upsertPodcast(p: Podcast): void {
+    const rest = this.getPodcasts().filter((x) => x.id !== p.id);
+    this.setPodcasts([p, ...rest]);
   },
-  removeContent(id: string): void {
-    this.setContents(this.getContents().filter((c) => c.id !== id));
+  removePodcast(id: string): void {
+    this.setPodcasts(this.getPodcasts().filter((p) => p.id !== id));
+  },
+
+  // ── Notebooks ────────────────────────────────────────────
+  getNotebooks(): Notebook[] {
+    return readJson<Notebook[]>(KEY.notebooks, []);
+  },
+  setNotebooks(list: Notebook[]): void {
+    writeJson(KEY.notebooks, list);
+  },
+  upsertNotebook(nb: Notebook): void {
+    const rest = this.getNotebooks().filter((x) => x.id !== nb.id);
+    this.setNotebooks([nb, ...rest]);
+  },
+  removeNotebook(id: string): void {
+    this.setNotebooks(this.getNotebooks().filter((nb) => nb.id !== id));
   },
 
   // ── Preferences ──────────────────────────────────────────
@@ -77,7 +96,7 @@ export const mmkvStore = {
     writeJson(KEY.preferences, p);
   },
 
-  // ── Offline map (contentId → OfflineEntry) ───────────────
+  // ── Offline map (podcastId → OfflineEntry) ───────────────
   getOfflineMap(): Record<string, OfflineEntry> {
     return readJson<Record<string, OfflineEntry>>(KEY.offlineMap, {});
   },

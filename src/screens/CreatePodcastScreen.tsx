@@ -1,13 +1,15 @@
-import { useJobPolling } from '@/src/entities';
-import type {
-  AudioFormat,
-  DurationMin,
-  TtsVoice,
-} from '@/src/entities/content/model';
-import { contentRepository } from '@/src/entities/content/repository';
+import {
+  podcastRepository,
+  useJobPolling,
+  useNotebook,
+  type AudioFormat,
+  type DurationMin,
+  type Source,
+  type TtsVoice,
+} from '@/src/entities';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -16,16 +18,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const RECOMMENDATIONS = [
-  '알고리즘 기말고사 대비',
-  '그래프와 트리의 차이',
-  'BFS 개념 복습',
-];
 
 // 실제 진행률(0~100)을 로딩 단계(1~3)로 변환
 const progressToStage = (progress: number): 1 | 2 | 3 => {
@@ -38,11 +34,19 @@ export default function CreatePodcastScreen() {
   // Wizard flow step: 1 | 2 | 3 | 4 | 5
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
+  // Retrieve notebookId from query parameters
+  const { notebookId } = useLocalSearchParams<{ notebookId: string }>();
+
+  // Notebook data fetch
+  const { data: notebook, loading: notebookLoading } = useNotebook(
+    notebookId || null,
+  );
+  const [selectedSource, setSelectedSource] = useState<Source | null>(null);
+
   // Form states
-  const [topic, setTopic] = useState('');
-  const [format, setFormat] = useState<AudioFormat>('dialog');
-  const [voice, setVoice] = useState<TtsVoice>('friend');
-  const [duration, setDuration] = useState<DurationMin>(10);
+  const [format, setFormat] = useState<AudioFormat>('story');
+  const [voice, setVoice] = useState<TtsVoice>('professor');
+  const [duration, setDuration] = useState<DurationMin>(5);
   const [jobId, setJobId] = useState<string | null>(null);
 
   // jobId가 정해지면 완료될 때까지 자동으로 상태를 확인(폴링)한다.
@@ -121,8 +125,8 @@ export default function CreatePodcastScreen() {
 
   // Triggers podcast creation flow
   const handleCreate = async () => {
-    if (!topic.trim()) {
-      Alert.alert('알림', '주제를 입력해 주세요.');
+    if (!selectedSource) {
+      Alert.alert('알림', '자료를 선택해 주세요.');
       return;
     }
 
@@ -143,27 +147,23 @@ export default function CreatePodcastScreen() {
     // 폴백 연출 타이머 등록
     timersRef.current = [t1, t2];
 
-    const virtualFile = {
-      name: `${topic.trim()}.pdf`,
-      size: '1.2 MB',
-    };
-
     try {
       // 1. 생성 요청을 보내고, 돌려받은 jobId를 저장한다.
-      const result = await contentRepository.generate(
+      const result = await podcastRepository.generate(
         {
-          materialId: `mat_demo_${Date.now()}`,
-          duration,
-          format,
-          ttsVoice: voice,
+          fileId: selectedSource.id,
+          notebookId: notebookId || '',
+          durationMinutes: duration,
+          format: 'summary',
+          voiceStyle: voice === 'friend' ? 'friendly' : 'professor',
         },
         {
           userId: 'u_demo',
-          title: topic.trim() + ` (AI ${duration}분 요약)`,
+          title: '제목 생성 중...',
           duration,
           format,
           ttsVoice: voice,
-          script: `${virtualFile.name} 분석 중... 팟캐스트 콘텐츠를 생성하고 있습니다. 잠시만 기다려주세요.`,
+          script: `${selectedSource.name} 분석 중... 팟캐스트 콘텐츠를 생성하고 있습니다. 잠시만 기다려주세요.`,
         },
       );
 
@@ -181,6 +181,26 @@ export default function CreatePodcastScreen() {
       console.error('[CreatePodcastScreen] handleCreate error:', err);
       setStep(4);
     }
+  };
+
+  // 생성 중 X 버튼 눌렀을 때 호출
+  const handleExitWhileGenerating = () => {
+    Alert.alert(
+      '생성 중단',
+      '팟캐스트 생성이 진행 중입니다. 나가시겠어요?\n완료되면 보관함에서 확인할 수 있어요.',
+      [
+        { text: '계속 기다리기', style: 'cancel' },
+        {
+          text: '나가기',
+          style: 'destructive',
+          onPress: () => {
+            setJobId(null);
+            timersRef.current.forEach(clearTimeout);
+            router.back();
+          },
+        },
+      ],
+    );
   };
 
   // Helper component to render progress checklist in Step 5
@@ -322,72 +342,88 @@ export default function CreatePodcastScreen() {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {/* Step 1: Topic Input */}
+              {/* Step 1: Source Selection */}
               {step === 1 && (
                 <View style={styles.stepContainer}>
                   <View style={styles.titleSection}>
-                    <Text style={styles.titleText}>무슨 내용의</Text>
+                    <Text style={styles.titleText}>어떤 자료로</Text>
                     <Text style={styles.titleText}>팟캐스트를 만들까요?</Text>
-                    <Text style={styles.subtitleText}>
-                      아래에서 선택하거나 직접 입력해요
-                    </Text>
+                    <Text style={styles.subtitleText}>아래에서 선택하세요</Text>
                   </View>
 
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      topic.trim().length > 0 && styles.inputWrapperFilled,
-                    ]}
-                  >
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="주제를 입력해 주세요"
-                      placeholderTextColor={Palette.textMuted}
-                      value={topic}
-                      onChangeText={setTopic}
-                      autoCapitalize="none"
-                      autoCorrect={false}
+                  {notebookLoading ? (
+                    <ActivityIndicator
+                      size="large"
+                      color={Palette.primary}
+                      style={{ marginTop: 40 }}
                     />
-                    {topic.trim().length > 0 && (
-                      <Pressable
-                        onPress={() => setTopic('')}
-                        style={styles.clearButton}
-                      >
-                        <Ionicons
-                          name="close-circle"
-                          size={18}
-                          color={Palette.textMuted}
-                        />
-                      </Pressable>
-                    )}
-                  </View>
-
-                  <View style={styles.recommendSection}>
-                    <Text style={styles.recommendTitle}>추천 내용</Text>
-                    {RECOMMENDATIONS.map((rec) => {
-                      const isSelected = topic.trim() === rec;
-                      return (
-                        <Pressable
-                          key={rec}
-                          onPress={() => setTopic(rec)}
-                          style={({ pressed }) => [
-                            styles.recommendChip,
-                            isSelected && styles.recommendChipSelected,
-                            pressed && styles.actionPressed,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.recommendChipText,
-                              isSelected && styles.recommendChipTextSelected,
-                            ]}
-                          >
-                            {rec}
+                  ) : (
+                    <>
+                      {/* 자료 선택 영역 */}
+                      {!notebook ||
+                      !notebook.sources ||
+                      notebook.sources.length === 0 ? (
+                        <View style={styles.placeholderContainer}>
+                          <Text style={styles.placeholderText}>
+                            이 노트북에는 업로드된 자료가 없습니다.
                           </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
+                        </View>
+                      ) : (
+                        <View style={styles.sourcesList}>
+                          {notebook.sources.map((src) => {
+                            const isSelected = selectedSource?.id === src.id;
+                            const iconName =
+                              src.type === 'PDF' ? 'document-text' : 'document';
+                            return (
+                              <Pressable
+                                key={src.id}
+                                onPress={() => setSelectedSource(src)}
+                                style={[
+                                  styles.sourceCard,
+                                  isSelected && styles.sourceCardSelected,
+                                ]}
+                              >
+                                <Ionicons
+                                  name={iconName}
+                                  size={22}
+                                  color={
+                                    isSelected
+                                      ? Palette.primary
+                                      : Palette.textSecondary
+                                  }
+                                  style={{ marginRight: 12 }}
+                                />
+                                <View style={{ flex: 1 }}>
+                                  <Text
+                                    style={[
+                                      styles.sourceName,
+                                      isSelected && styles.sourceNameSelected,
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {src.name}
+                                  </Text>
+                                  <Text style={styles.sourceMeta}>
+                                    {src.type} •{' '}
+                                    {new Date(
+                                      src.createdAt,
+                                    ).toLocaleDateString()}
+                                  </Text>
+                                </View>
+                                {isSelected && (
+                                  <Ionicons
+                                    name="checkmark-circle"
+                                    size={20}
+                                    color={Palette.primary}
+                                  />
+                                )}
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </>
+                  )}
                 </View>
               )}
 
@@ -421,14 +457,17 @@ export default function CreatePodcastScreen() {
                       ] as const
                     ).map((opt) => {
                       const isSelected = format === opt.id;
+                      const isDisabled = opt.id !== 'story';
                       return (
                         <Pressable
                           key={opt.id}
                           onPress={() => setFormat(opt.id)}
+                          disabled={isDisabled}
                           style={({ pressed }) => [
                             styles.card,
                             isSelected && styles.cardSelected,
-                            pressed && styles.actionPressed,
+                            isDisabled && styles.cardDisabled,
+                            !isDisabled && pressed && styles.actionPressed,
                           ]}
                         >
                           <Text
@@ -482,14 +521,17 @@ export default function CreatePodcastScreen() {
                       ] as const
                     ).map((opt) => {
                       const isSelected = voice === opt.id;
+                      const isDisabled = opt.id !== 'professor';
                       return (
                         <Pressable
                           key={opt.id}
                           onPress={() => setVoice(opt.id)}
+                          disabled={isDisabled}
                           style={({ pressed }) => [
                             styles.card,
                             isSelected && styles.cardSelected,
-                            pressed && styles.actionPressed,
+                            isDisabled && styles.cardDisabled,
+                            !isDisabled && pressed && styles.actionPressed,
                           ]}
                         >
                           <Text
@@ -540,14 +582,17 @@ export default function CreatePodcastScreen() {
                       ] as const
                     ).map((opt) => {
                       const isSelected = duration === opt.id;
+                      const isDisabled = opt.id !== 5;
                       return (
                         <Pressable
                           key={opt.id}
                           onPress={() => setDuration(opt.id)}
+                          disabled={isDisabled}
                           style={({ pressed }) => [
                             styles.card,
                             isSelected && styles.cardSelected,
-                            pressed && styles.actionPressed,
+                            isDisabled && styles.cardDisabled,
+                            !isDisabled && pressed && styles.actionPressed,
                           ]}
                         >
                           <Text
@@ -571,7 +616,7 @@ export default function CreatePodcastScreen() {
             <View style={styles.footer}>
               <Pressable
                 onPress={() => {
-                  if (step === 1 && !topic.trim()) return;
+                  if (step === 1 && selectedSource === null) return;
                   if (step < 4) {
                     transitionToStep((step + 1) as any);
                   } else {
@@ -580,10 +625,12 @@ export default function CreatePodcastScreen() {
                 }}
                 style={({ pressed }) => [
                   styles.primaryButton,
-                  step === 1 && !topic.trim() && styles.primaryButtonDisabled,
+                  step === 1 &&
+                    selectedSource === null &&
+                    styles.primaryButtonDisabled,
                   pressed && styles.primaryButtonPressed,
                 ]}
-                disabled={step === 1 && !topic.trim()}
+                disabled={step === 1 && selectedSource === null}
               >
                 <Text style={styles.primaryButtonText}>
                   {step === 4 ? '생성하기' : '다음으로'}
@@ -594,86 +641,101 @@ export default function CreatePodcastScreen() {
         </>
       ) : (
         /* Step 5: Loading Progress Screen */
-        <Animated.View
-          style={[styles.step5Container, { opacity: stepFadeAnim }]}
-        >
-          {/* Circular Progress Ring Container with spinning outer ring and static inner text */}
-          <View style={styles.graphicWrapper}>
-            <View
-              style={[
-                styles.progressRing,
-                {
-                  transform: [{ rotate: '45deg' }],
-                  borderTopColor: prog.borderTopColor,
-                  borderRightColor: prog.borderRightColor,
-                  borderBottomColor: prog.borderBottomColor,
-                  borderLeftColor: prog.borderLeftColor,
-                  borderColor: prog.borderColor,
-                },
+        <Animated.View style={[styles.step5Wrapper, { opacity: stepFadeAnim }]}>
+          {/* X 버튼 - 오른쪽 상단 */}
+          <View style={styles.step5HeaderBar}>
+            <Pressable
+              onPress={handleExitWhileGenerating}
+              style={({ pressed }) => [
+                styles.step5CloseButton,
+                pressed && styles.actionPressed,
               ]}
-            />
-            {/* Round caps for progress ring endpoints */}
-            {loadingStage < 4 && (
-              <>
-                {/* Start Cap (always at 0 degrees / top center) */}
-                <View
-                  style={[
-                    styles.progressCap,
-                    {
-                      left: 65,
-                      top: 0,
-                    },
-                  ]}
-                />
-                {/* End Cap */}
-                {loadingStage === 1 && (
-                  <View
-                    style={[
-                      styles.progressCap,
-                      {
-                        left: 130,
-                        top: 65,
-                      },
-                    ]}
-                  />
-                )}
-                {loadingStage === 2 && (
+            >
+              <Ionicons name="close" size={24} color={Palette.textPrimary} />
+            </Pressable>
+          </View>
+
+          <View style={styles.step5Container}>
+            {/* Circular Progress Ring Container with spinning outer ring and static inner text */}
+            <View style={styles.graphicWrapper}>
+              <View
+                style={[
+                  styles.progressRing,
+                  {
+                    transform: [{ rotate: '45deg' }],
+                    borderTopColor: prog.borderTopColor,
+                    borderRightColor: prog.borderRightColor,
+                    borderBottomColor: prog.borderBottomColor,
+                    borderLeftColor: prog.borderLeftColor,
+                    borderColor: prog.borderColor,
+                  },
+                ]}
+              />
+              {/* Round caps for progress ring endpoints */}
+              {loadingStage < 4 && (
+                <>
+                  {/* Start Cap (always at 0 degrees / top center) */}
                   <View
                     style={[
                       styles.progressCap,
                       {
                         left: 65,
-                        top: 130,
+                        top: 0,
                       },
                     ]}
                   />
-                )}
-                {loadingStage === 3 && (
-                  <View
-                    style={[
-                      styles.progressCap,
-                      {
-                        left: 0,
-                        top: 65,
-                      },
-                    ]}
-                  />
-                )}
-              </>
-            )}
-          </View>
+                  {/* End Cap */}
+                  {loadingStage === 1 && (
+                    <View
+                      style={[
+                        styles.progressCap,
+                        {
+                          left: 130,
+                          top: 65,
+                        },
+                      ]}
+                    />
+                  )}
+                  {loadingStage === 2 && (
+                    <View
+                      style={[
+                        styles.progressCap,
+                        {
+                          left: 65,
+                          top: 130,
+                        },
+                      ]}
+                    />
+                  )}
+                  {loadingStage === 3 && (
+                    <View
+                      style={[
+                        styles.progressCap,
+                        {
+                          left: 0,
+                          top: 65,
+                        },
+                      ]}
+                    />
+                  )}
+                </>
+              )}
+            </View>
 
-          <View style={styles.titleSectionCenter}>
-            <Text style={styles.generatingTitle}>
-              팟캐스트를 생성하고 있어요
-            </Text>
-            <Text style={styles.generatingSubtitle}>잠시만 기다려 주세요</Text>
-          </View>
+            <View style={styles.titleSectionCenter}>
+              <Text style={styles.generatingTitle}>
+                팟캐스트를 생성하고 있어요
+              </Text>
+              <Text style={styles.generatingSubtitle}>
+                잠시만 기다려 주세요
+              </Text>
+            </View>
 
-          <View style={styles.checklistContainer}>
-            {renderProgressItem(1, '자료 분석', '진행중', '대기중')}
-            {renderProgressItem(2, '스크립트 생성', '진행중', '대기중')}
-            {renderProgressItem(3, 'TTS 변환', '진행중', '대기중')}
+            <View style={styles.checklistContainer}>
+              {renderProgressItem(1, '자료 분석', '진행중', '대기중')}
+              {renderProgressItem(2, '스크립트 생성', '진행중', '대기중')}
+              {renderProgressItem(3, 'TTS 변환', '진행중', '대기중')}
+            </View>
           </View>
         </Animated.View>
       )}
@@ -751,62 +813,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.pretendardRegular,
     marginTop: 6,
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Palette.primarySubtle,
-    borderWidth: 1.5,
-    borderColor: Palette.border,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputWrapperFilled: {
-    borderColor: Palette.primary,
-    backgroundColor: Palette.primaryMuted,
-  },
-  textInput: {
-    flex: 1,
-    height: '100%',
-    color: Palette.textPrimary,
-    fontSize: 15,
-    fontFamily: Fonts.pretendardMedium,
-  },
-  clearButton: {
-    padding: 4,
-  },
-  recommendSection: {
-    marginTop: 32,
-  },
-  recommendTitle: {
-    fontSize: 15,
-    color: Palette.textPrimary,
-    fontFamily: Fonts.pretendardMedium,
-    marginBottom: 12,
-  },
-  recommendChip: {
-    backgroundColor: Palette.primaryMuted,
-    borderRadius: 9999,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  recommendChipSelected: {
-    borderColor: Palette.primary,
-    backgroundColor: Palette.primaryHover,
-  },
-  recommendChipText: {
-    fontSize: 14,
-    color: Palette.textPrimary,
-    fontFamily: Fonts.pretendardRegular,
-  },
-  recommendChipTextSelected: {
-    color: Palette.primary,
-    fontFamily: Fonts.pretendardMedium,
-  },
   optionsList: {
     gap: 12,
   },
@@ -821,6 +827,9 @@ const styles = StyleSheet.create({
   cardSelected: {
     backgroundColor: Palette.primaryMuted,
     borderColor: Palette.primary,
+  },
+  cardDisabled: {
+    opacity: 0.4,
   },
   cardTitle: {
     fontSize: 16,
@@ -869,6 +878,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Palette.bgCard,
     fontFamily: Fonts.pretendardBold,
+  },
+  step5Wrapper: {
+    flex: 1,
+  },
+  step5HeaderBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  step5CloseButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Palette.bgCard,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   step5Container: {
     flex: 1,
@@ -997,5 +1024,52 @@ const styles = StyleSheet.create({
   },
   verticalLineComplete: {
     backgroundColor: Palette.primary,
+  },
+  placeholderContainer: {
+    borderWidth: 1,
+    borderColor: Palette.border,
+    borderStyle: 'dashed',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Palette.primarySubtle,
+    marginTop: 4,
+  },
+  placeholderText: {
+    fontSize: 14,
+    fontFamily: Fonts.pretendardRegular,
+    color: Palette.textMuted,
+  },
+  sourcesList: {
+    gap: 10,
+    marginTop: 4,
+  },
+  sourceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Palette.primarySubtle,
+    borderWidth: 1.5,
+    borderColor: Palette.border,
+    borderRadius: 16,
+    padding: 14,
+  },
+  sourceCardSelected: {
+    borderColor: Palette.primary,
+    backgroundColor: Palette.primaryMuted,
+  },
+  sourceName: {
+    fontSize: 15,
+    fontFamily: Fonts.pretendardMedium,
+    color: Palette.textPrimary,
+  },
+  sourceNameSelected: {
+    fontFamily: Fonts.pretendardBold,
+  },
+  sourceMeta: {
+    fontSize: 12,
+    fontFamily: Fonts.pretendardRegular,
+    color: Palette.textSecondary,
+    marginTop: 4,
   },
 });

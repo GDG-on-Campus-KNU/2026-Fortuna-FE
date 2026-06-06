@@ -11,7 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": ["audio", "audio"],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.fortuna.studycast",
       "googleServicesFile": "./GoogleService-Info.plist"
@@ -19,7 +20,11 @@
     "android": {
       "predictiveBackGestureEnabled": false,
       "package": "com.fortuna.studycast",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "output": "static",
@@ -46,7 +51,9 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "deploymentTarget": "15.1",
+            "forceStaticLinking": ["RNFBApp", "RNFBRemoteConfig"]
           }
         }
       ],
@@ -55,6 +62,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6ea9cf62-82e0-4223-82cd-edc333d02673"
+      }
+    },
+    "owner": "segyun"
   }
 }

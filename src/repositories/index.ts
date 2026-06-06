@@ -7,4 +7,4 @@ export {
   resolvePlaybackSource,
   resolvePlaybackTrack,
   type AudioTrack,
-} from '@/src/entities/content';
+} from '@/src/entities/podcast';

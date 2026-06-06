@@ -11,20 +11,13 @@
 //  5. resolvePlaybackTrack 이 정희균 player AudioTrack shape 으로 반환되는지
 
 import { useEffect } from 'react';
-import {
-  Alert,
-  Button,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Button, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import {
   resolvePlaybackTrack,
-  useContents,
+  usePodcasts,
   usePreferences,
-  type Content,
+  type Podcast,
 } from '@/src/entities';
 import { installMockAdapter } from '@/src/services/api';
 import { mmkvStore } from '@/src/services/storage';
@@ -33,12 +26,17 @@ import { mmkvStore } from '@/src/services/storage';
 installMockAdapter();
 
 export default function DataDebugScreen() {
-  const { data, loading, refresh } = useContents();
+  const { data, loading, refresh } = usePodcasts();
   const { prefs, set } = usePreferences();
 
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('[data-debug] contents count =', data.length, 'loading=', loading);
+     
+    console.log(
+      '[data-debug] contents count =',
+      data.length,
+      'loading=',
+      loading,
+    );
   }, [data.length, loading]);
 
   return (
@@ -67,7 +65,7 @@ export default function DataDebugScreen() {
       </View>
 
       <Text style={styles.subtitle}>
-        {loading ? 'Loading…' : `${data.length} contents`}
+        {loading ? 'Loading…' : `${data.length} podcasts`}
       </Text>
 
       <FlatList
@@ -80,7 +78,7 @@ export default function DataDebugScreen() {
   );
 }
 
-function ContentRow({ item }: { item: Content }) {
+function ContentRow({ item }: { item: Podcast }) {
   const onTestTrack = async () => {
     try {
       const track = await resolvePlaybackTrack(item.id);

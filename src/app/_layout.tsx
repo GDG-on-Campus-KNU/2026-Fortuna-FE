@@ -60,7 +60,7 @@ function useProtectedRoute() {
     if (status === 'loading') return;
     const inAuthGroup = segments[0] === '(auth)';
     if (status === 'unauthenticated' && !inAuthGroup) {
-      router.replace('/login');
+      router.replace('/signIn');
     } else if (status === 'authenticated' && inAuthGroup) {
       router.replace('/');
     }
@@ -112,10 +112,19 @@ function useInitializeRemoteConfig() {
         await fetchAndActivate(rc);
 
         // Remote Config에서 api_base_url 값을 읽어와 Axios apiClient의 baseURL 업데이트
+        // 단, .env 파일에 개발자가 직접 EXPO_PUBLIC_API_BASE_URL을 명시한 경우(로컬 테스트 등)에는
+        // Remote Config 값으로 덮어쓰지 않고 개발자 설정을 유지합니다.
+        const hasExplicitBaseUrl = !!process.env.EXPO_PUBLIC_API_BASE_URL;
         const apiBaseUrl = getValue(rc, 'api_base_url').asString();
-        if (apiBaseUrl) {
+        if (apiBaseUrl && !hasExplicitBaseUrl) {
           apiClient.defaults.baseURL = apiBaseUrl;
-          console.log(`Axios baseURL dynamic update: ${apiBaseUrl}`);
+          console.log(
+            `Axios baseURL dynamic update (Remote Config): ${apiBaseUrl}`,
+          );
+        } else if (hasExplicitBaseUrl) {
+          console.log(
+            `Axios baseURL preserved from .env config: ${apiClient.defaults.baseURL}`,
+          );
         }
         console.log('Firebase Remote Config initialized successfully.');
       } catch (err) {

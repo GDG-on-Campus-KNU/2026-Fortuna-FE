@@ -13,12 +13,13 @@ import {
   Animated,
   PanResponder,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PLAYBACK_RATES, useAudioStore } from '@/src/features/audio';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
 
 export default function AudioPlayerScreen() {
+  const insets = useSafeAreaInsets();
   const {
     activeTrack,
     playbackState,
@@ -102,7 +103,13 @@ export default function AudioPlayerScreen() {
           style={[styles.animatedContainer, { transform: [{ translateY }] }]}
           {...panResponder.panHandlers}
         >
-          <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+          <View
+            style={{
+              flex: 1,
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+            }}
+          >
             {/* Drag Handle */}
             <View style={styles.dragHandleContainer}>
               <View style={styles.dragHandle} />
@@ -141,7 +148,7 @@ export default function AudioPlayerScreen() {
                 <Text style={styles.emptyButtonText}>보관함으로 이동하기</Text>
               </Pressable>
             </View>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </View>
     );
@@ -197,7 +204,13 @@ export default function AudioPlayerScreen() {
         style={[styles.animatedContainer, { transform: [{ translateY }] }]}
         {...panResponder.panHandlers}
       >
-        <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        <View
+          style={{
+            flex: 1,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+          }}
+        >
           {/* Drag Handle */}
           <View style={styles.dragHandleContainer}>
             <View style={styles.dragHandle} />
@@ -273,7 +286,7 @@ export default function AudioPlayerScreen() {
 
           {/* 4. Controls Row (Shuffle, Replay 10, Play/Pause, Forward 10, Repeat) */}
           <View style={styles.controlRow}>
-            <Pressable
+            {/* <Pressable
               onPress={() => setIsShuffle(!isShuffle)}
               style={({ pressed }) => [
                 styles.iconControl,
@@ -285,7 +298,7 @@ export default function AudioPlayerScreen() {
                 size={24}
                 color={isShuffle ? Palette.primary : Palette.textPrimary}
               />
-            </Pressable>
+            </Pressable> */}
 
             <Pressable
               onPress={() => jump(-10)}
@@ -335,7 +348,7 @@ export default function AudioPlayerScreen() {
               />
             </Pressable>
 
-            <Pressable
+            {/* <Pressable
               onPress={() => setIsRepeat(!isRepeat)}
               style={({ pressed }) => [
                 styles.iconControl,
@@ -347,7 +360,7 @@ export default function AudioPlayerScreen() {
                 size={24}
                 color={isRepeat ? Palette.primary : Palette.textPrimary}
               />
-            </Pressable>
+            </Pressable> */}
           </View>
 
           {/* 5. More Options Modal (Bottom Sheet for Playback Speed) */}
@@ -409,7 +422,7 @@ export default function AudioPlayerScreen() {
               </View>
             </Pressable>
           </Modal>
-        </SafeAreaView>
+        </View>
       </Animated.View>
     </View>
   );

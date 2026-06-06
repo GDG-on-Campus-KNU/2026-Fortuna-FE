@@ -40,7 +40,7 @@ type AudioStore = {
   rate: number;
 
   // Actions
-  init: (track: AudioTrack) => Promise<void>;
+  init: (track: AudioTrack) => Promise<boolean>;
   unload: () => Promise<void>;
   togglePlayback: () => Promise<void>;
   stop: () => Promise<void>;
@@ -53,9 +53,31 @@ type AudioStore = {
 let soundInstance: AudioPlayer | undefined;
 let setupPromise: Promise<AudioPlayer> | undefined;
 let statusListenerSubscription: { remove: () => void } | undefined;
+let initRequestId = 0;
+
+const disposeCurrentPlayer = () => {
+  const currentSound = soundInstance;
+  soundInstance = undefined;
+  setupPromise = undefined;
+
+  if (statusListenerSubscription) {
+    statusListenerSubscription.remove();
+    statusListenerSubscription = undefined;
+  }
+
+  currentSound?.pause();
+  currentSound?.remove();
+};
 
 const handlePlaybackStatusUpdate = (status: AudioStatus, set: any) => {
   if (!status.isLoaded) {
+    if (status.playbackState === 'error') {
+      console.warn('[useAudioStore] AudioPlayer error:', status);
+      set({
+        error: '오디오를 로드할 수 없습니다.',
+        playbackState: 'error',
+      });
+    }
     return;
   }
 
@@ -85,17 +107,26 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   setBusy: (isBusy) => set({ isBusy }),
 
   init: async (track) => {
+    const requestId = ++initRequestId;
+
     // If already playing the same track, just return
-    if (soundInstance && get().activeTrack?.id === track.id) return;
+    if (soundInstance && get().activeTrack?.id === track.id) return true;
+
+    if (setupPromise) {
+      try {
+        await setupPromise;
+      } catch {
+        // The active request below will surface its own error state.
+      }
+    }
+
+    if (requestId !== initRequestId) {
+      return false;
+    }
 
     // If playing a different track, unload first
     if (soundInstance) {
       await get().unload();
-    }
-
-    if (setupPromise) {
-      await setupPromise;
-      return;
     }
 
     set({ isBusy: true, playbackState: 'loading' });
@@ -113,6 +144,12 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
         const player = createAudioPlayer(track.url, {
           updateInterval: 500,
         });
+
+        if (requestId !== initRequestId) {
+          player.pause();
+          player.remove();
+          return player;
+        }
 
         // Set playback configurations
         player.setPlaybackRate(get().rate, 'medium');
@@ -156,22 +193,13 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
     })();
 
     await setupPromise;
+    return requestId === initRequestId;
   },
 
   unload: async () => {
     if (!soundInstance) return;
 
-    const currentSound = soundInstance;
-    soundInstance = undefined;
-    setupPromise = undefined;
-
-    if (statusListenerSubscription) {
-      statusListenerSubscription.remove();
-      statusListenerSubscription = undefined;
-    }
-
-    currentSound.remove();
-
+    disposeCurrentPlayer();
     set({ isReady: false, playbackState: 'idle', activeTrack: undefined });
   },
 

@@ -7,17 +7,26 @@
 //   } from '@/src/entities';
 
 export {
-  useContents,
-  useContent,
+  usePodcasts,
+  usePodcast,
+  podcastRepository,
   resolvePlaybackSource,
   resolvePlaybackTrack,
   type AudioTrack,
-  type Content,
-  type ContentStatus,
+  type Podcast,
+  type PodcastStatus,
   type AudioFormat,
   type TtsVoice,
   type DurationMin,
-} from './content';
+} from './podcast';
+
+export {
+  useNotebooks,
+  useNotebook,
+  notebookRepository,
+  type Notebook,
+  type Source,
+} from './notebook';
 
 export { usePreferences, type UserPreferences } from './preferences';
 

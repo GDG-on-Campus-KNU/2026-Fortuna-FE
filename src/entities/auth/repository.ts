@@ -7,17 +7,17 @@ import type { Credentials } from './model';
 // 화면은 Repository를 직접 모른다 — Hook(useAuth)을 통해서만 접근한다.
 export const authRepository = {
   // 로그인: 토큰 발급 → 저장 → /me로 검증 겸 프로필 로드 → 인증 상태 확정.
-  async login(credentials: Credentials): Promise<void> {
-    const { accessToken } = await authApi.login(credentials);
+  async signIn(credentials: Credentials): Promise<void> {
+    const { accessToken } = await authApi.signIn(credentials);
     tokenStore.set(accessToken);
     const user = await authApi.me();
     useAuthStore.getState().setAuthed(user);
   },
 
   // 회원가입 후 동일 자격 증명으로 자동 로그인까지 이어준다.
-  async signup(credentials: Credentials): Promise<void> {
-    await authApi.signup(credentials);
-    await this.login(credentials);
+  async signUp(credentials: Credentials): Promise<void> {
+    await authApi.signUp(credentials);
+    await this.signIn(credentials);
   },
 
   logout(): void {

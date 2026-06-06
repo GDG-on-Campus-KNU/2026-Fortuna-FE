@@ -43,7 +43,7 @@ export default function SignUpScreen() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
   // 가입 동작 및 결과 상태들
-  const { submit, submitting, error, clearError } = useAuthForm('signup');
+  const { submit, submitting, error, clearError } = useAuthForm('signUp');
 
   const onChangeEmail = (val: string) => {
     if (error) clearError();
@@ -203,7 +203,7 @@ export default function SignUpScreen() {
                 </Text>
                 <Pressable
                   onPress={() => {
-                    router.push('/login');
+                    router.push('/signIn');
                   }}
                   style={({ pressed }) => pressed && styles.actionPressed}
                 >

@@ -22,13 +22,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authRepository } from '@/src/entities/auth';
-import { useContents } from '@/src/entities/content/hooks';
-import type {
-  AudioFormat,
-  Content,
-  TtsVoice,
-} from '@/src/entities/content/model';
-import { contentRepository } from '@/src/entities/content/repository';
+import {
+  useNotebooks,
+  notebookRepository,
+  type Notebook,
+  type AudioFormat,
+  type TtsVoice,
+} from '@/src/entities';
 import { useAudioStore, type AudioTrack } from '@/src/features/audio';
 import { Fonts, Palette } from '@/src/shared/constants/theme';
 
@@ -36,11 +36,11 @@ const { width } = Dimensions.get('window');
 const CARD_MARGIN = 12;
 const CARD_SIZE = (width - 48 - CARD_MARGIN) / 2; // 가로 마진 24*2 = 48 제외 후 2등분
 
-type GridItem = Content | { id: string; isAddCard: boolean };
+type GridItem = Notebook | { id: string; isAddCard: boolean };
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { data: contents, loading, refresh } = useContents();
+  const { data: notebooks, loading, refresh } = useNotebooks();
   const initAudio = useAudioStore((state) => state.init);
   const activeTrack = useAudioStore((state) => state.activeTrack);
   const playbackState = useAudioStore((state) => state.playbackState);
@@ -98,30 +98,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handlePlayContent = async (item: Content) => {
-    if (item.status !== 'done' || !item.audioUrl) return;
-
-    const track: AudioTrack = {
-      id: item.id,
-      url: item.audioUrl,
-      title: item.title,
-      artist: getVoiceDetails(item.ttsVoice).label,
-      album: getFormatDetails(item.format).label,
-      duration: item.duration * 60, // 분 -> 초
-      description: item.script || 'AI가 생성한 고품격 맞춤 팟캐스트입니다.',
-    };
-
-    try {
-      await initAudio(track);
-      const state = useAudioStore.getState();
-      if (state.playbackState !== 'playing') {
-        await state.togglePlayback();
-      }
-      router.push('/player');
-    } catch (err) {
-      console.error('오디오 초기화 오류:', err);
-    }
-  };
+  // handlePlayContent is deprecated in favor of playing podcasts within a notebook detail.
 
   const handleProfilePress = () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
@@ -149,7 +126,7 @@ export default function HomeScreen() {
 
     setIsCreating(true);
     try {
-      await contentRepository.create(notebookTitle.trim());
+      await notebookRepository.create(notebookTitle.trim());
       setIsModalVisible(false);
       refresh();
       Alert.alert('성공', '새 노트북이 성공적으로 생성되었습니다!');
@@ -187,8 +164,9 @@ export default function HomeScreen() {
     }
 
     // 일반 노트북 카드
-    const isDone = item.status === 'done';
-    const isGenerating = item.status === 'generating';
+    const isGenerating = item.podcasts?.some((p) => p.status === 'generating');
+    const isFailed = item.podcasts?.some((p) => p.status === 'failed');
+    const isDone = !isGenerating && !isFailed;
 
     return (
       <Pressable
@@ -235,13 +213,13 @@ export default function HomeScreen() {
     );
   };
 
-  // 기존 콘텐츠 목록 뒤에 "+ 새 노트북" 카드를 추가해 그리드 데이터 생성
-  const sortedContents = [...(contents || [])].sort(
+  // 기존 노트북 목록 뒤에 "+ 새 노트북" 카드를 추가해 그리드 데이터 생성
+  const sortedNotebooks = [...(notebooks || [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
   const gridData: GridItem[] = [
-    ...sortedContents,
+    ...sortedNotebooks,
     { id: 'add-new-notebook', isAddCard: true },
   ];
 
@@ -365,7 +343,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={loading && (contents || []).length > 0}
+              refreshing={loading && (notebooks || []).length > 0}
               onRefresh={refresh}
               colors={[Palette.primary]}
               progressViewOffset={insets.top + 108} // pull-to-refresh spinner sits below header

@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { contentRepository } from './repository';
+import { podcastRepository } from './repository';
 import { mmkvStore } from '@/src/services/storage/mmkv';
-import type { Content } from './model';
+import type { Podcast } from './model';
 
-interface UseContentsResult {
-  data: Content[];
+interface UsePodcastsResult {
+  data: Podcast[];
   loading: boolean;
   refresh: () => void;
 }
 
-export function useContents(): UseContentsResult {
-  const [data, setData] = useState<Content[]>([]);
+export function usePodcasts(): UsePodcastsResult {
+  const [data, setData] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
 
@@ -20,7 +20,7 @@ export function useContents(): UseContentsResult {
     let mounted = true;
     setLoading(true);
 
-    contentRepository
+    podcastRepository
       .listWithRevalidate((fresh) => {
         if (mounted) setData(fresh);
       })
@@ -38,14 +38,14 @@ export function useContents(): UseContentsResult {
   return { data, loading, refresh };
 }
 
-interface UseContentResult {
-  data: Content | null;
+interface UsePodcastResult {
+  data: Podcast | null;
   loading: boolean;
   error: Error | null;
 }
 
-export function useContent(id: string | null): UseContentResult {
-  const [data, setData] = useState<Content | null>(null);
+export function usePodcast(id: string | null): UsePodcastResult {
+  const [data, setData] = useState<Podcast | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -59,11 +59,11 @@ export function useContent(id: string | null): UseContentResult {
     setError(null);
 
     // 캐시에 같은 id가 있으면 즉시 보여주고, 서버 갱신은 백그라운드.
-    const cached = mmkvStore.getContents().find((c) => c.id === id) ?? null;
+    const cached = mmkvStore.getPodcasts().find((p) => p.id === id) ?? null;
     setData(cached);
     setLoading(cached === null);
 
-    contentRepository
+    podcastRepository
       .getDetail(id)
       .then((fresh) => {
         if (mounted) setData(fresh);
