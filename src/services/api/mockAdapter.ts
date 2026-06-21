@@ -249,6 +249,13 @@ export function installMockAdapter(): void {
 
   mock.onPost('/api/v1/auth/login').reply(200, {
     access_token: 'dev-mock-access-token',
+    refresh_token: 'dev-mock-refresh-token',
+    token_type: 'bearer',
+  });
+
+  mock.onPost('/api/v1/auth/refresh').reply(200, {
+    access_token: 'dev-mock-access-token-new',
+    refresh_token: 'dev-mock-refresh-token-new',
     token_type: 'bearer',
   });
 
