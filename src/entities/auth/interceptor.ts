@@ -1,5 +1,5 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { apiClient, BASE_URL } from '@/src/services/api/client';
+import { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { apiClient } from '@/src/services/api/client';
 import { tokenStore } from './tokenStore';
 import { useAuthStore } from './store';
 
@@ -47,17 +47,20 @@ export function installAuthInterceptor(): void {
         const refreshToken = tokenStore.getRefreshToken();
         if (refreshToken) {
           try {
-            // 직접 axios를 사용해 리프레시 엔드포인트 호출 (기본 헤더 주입 인터셉터 우회)
-            const response = await axios.post<{
-              access_token: string;
-              refresh_token: string;
-            }>(`${BASE_URL}/api/v1/auth/refresh`, {
+            // apiClient를 사용해 리프레시 엔드포인트 호출
+            // 1) dynamic baseURL (Remote Config) 자동 반영
+            // 2) MockAdapter 연동 지원
+            // 3) 응답에 대한 camelCase 키 변환 자동 처리
+            const response = await apiClient.post<{
+              accessToken: string;
+              refreshToken: string;
+            }>('/api/v1/auth/refresh', {
               refresh_token: refreshToken,
             });
 
             const {
-              access_token: newAccessToken,
-              refresh_token: newRefreshToken,
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
             } = response.data;
 
             // 새 토큰 세팅
