@@ -1,6 +1,6 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -12,6 +12,8 @@ import {
   View,
   Animated,
   PanResponder,
+  Dimensions,
+  Easing,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +38,37 @@ export default function AudioPlayerScreen() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const isModalVisibleRef = useRef(isModalVisible);
+
+  useEffect(() => {
+    isModalVisibleRef.current = isModalVisible;
+  }, [isModalVisible]);
+
+  const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+  const sheetTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  useEffect(() => {
+    if (isModalVisible) {
+      sheetTranslateY.setValue(SCREEN_HEIGHT);
+      Animated.timing(sheetTranslateY, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isModalVisible, SCREEN_HEIGHT]);
+
+  const closeModal = () => {
+    Animated.timing(sheetTranslateY, {
+      toValue: SCREEN_HEIGHT,
+      duration: 300,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => {
+      setIsModalVisible(false);
+    });
+  };
 
   // Drag down to dismiss gesture setup
   const translateY = useRef(new Animated.Value(0)).current;
@@ -43,11 +76,13 @@ export default function AudioPlayerScreen() {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: (evt, gestureState) => {
+        if (isModalVisibleRef.current) return false;
         const { pageY } = evt.nativeEvent;
         // Only trigger from upper area of the screen (excluding the scroll content and bottom controls)
         return pageY < 200;
       },
       onMoveShouldSetPanResponder: (evt, gestureState) => {
+        if (isModalVisibleRef.current) return false;
         const { pageY } = evt.nativeEvent;
         const { dy, dx } = gestureState;
         // Respond to downward dragging in the top area
@@ -365,17 +400,17 @@ export default function AudioPlayerScreen() {
 
           {/* 5. More Options Modal (Bottom Sheet for Playback Speed) */}
           <Modal
-            animationType="slide"
+            animationType="fade"
             transparent={true}
             visible={isModalVisible}
-            onRequestClose={() => setIsModalVisible(false)}
+            onRequestClose={closeModal}
           >
-            <Pressable
-              style={styles.modalOverlay}
-              onPress={() => setIsModalVisible(false)}
-            >
-              <View
-                style={styles.modalContent}
+            <Pressable style={styles.modalOverlay} onPress={closeModal}>
+              <Animated.View
+                style={[
+                  styles.modalContent,
+                  { transform: [{ translateY: sheetTranslateY }] },
+                ]}
                 onStartShouldSetResponder={() => true}
               >
                 <View style={styles.modalHeaderHandle} />
@@ -389,7 +424,7 @@ export default function AudioPlayerScreen() {
                         key={playbackRate}
                         onPress={() => {
                           void setRate(playbackRate);
-                          setIsModalVisible(false);
+                          // setIsModalVisible(false);
                         }}
                         style={({ pressed }) => [
                           styles.speedButton,
@@ -411,7 +446,7 @@ export default function AudioPlayerScreen() {
                 </View>
 
                 <Pressable
-                  onPress={() => setIsModalVisible(false)}
+                  onPress={closeModal}
                   style={({ pressed }) => [
                     styles.modalCloseButton,
                     pressed && styles.controlPressed,
@@ -419,7 +454,7 @@ export default function AudioPlayerScreen() {
                 >
                   <Text style={styles.modalCloseButtonText}>닫기</Text>
                 </Pressable>
-              </View>
+              </Animated.View>
             </Pressable>
           </Modal>
         </View>

@@ -21,6 +21,7 @@ export interface User {
 // POST /login 응답 (Token). token_type → tokenType.
 export interface AuthTokens {
   accessToken: string;
+  refreshToken: string;
   tokenType: string;
 }
 

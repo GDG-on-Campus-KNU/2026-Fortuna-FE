@@ -8,8 +8,8 @@ import type { Credentials } from './model';
 export const authRepository = {
   // 로그인: 토큰 발급 → 저장 → /me로 검증 겸 프로필 로드 → 인증 상태 확정.
   async signIn(credentials: Credentials): Promise<void> {
-    const { accessToken } = await authApi.signIn(credentials);
-    tokenStore.set(accessToken);
+    const { accessToken, refreshToken } = await authApi.signIn(credentials);
+    tokenStore.set(accessToken, refreshToken);
     const user = await authApi.me();
     useAuthStore.getState().setAuthed(user);
   },

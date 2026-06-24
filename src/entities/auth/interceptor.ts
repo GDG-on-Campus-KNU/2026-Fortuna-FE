@@ -1,4 +1,4 @@
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { apiClient } from '@/src/services/api/client';
 import { tokenStore } from './tokenStore';
 import { useAuthStore } from './store';
@@ -21,16 +21,65 @@ export function installAuthInterceptor(): void {
     return config;
   });
 
-  // 응답: 401이면 토큰 만료/무효로 보고 강제 로그아웃 → 가드가 로그인 화면으로 보낸다.
-  // 단, 로그인 요청 자체의 401(자격 증명 오류)은 화면에서 메시지로 처리하므로 제외한다.
+  // 응답: 401이면 리프레시 토큰으로 자동 갱신 시도 후 재요청.
+  // 갱신 실패 시 강제 로그아웃 처리.
   apiClient.interceptors.response.use(
     (response) => response,
-    (error: AxiosError) => {
-      const url = error.config?.url ?? '';
-      const isSignInRequest = url.includes('/auth/login');
-      if (error.response?.status === 401 && !isSignInRequest) {
-        useAuthStore.getState().forceLogout();
+    async (error: AxiosError) => {
+      const originalRequest = error.config;
+      if (!originalRequest) {
+        return Promise.reject(error);
       }
+
+      const url = originalRequest.url ?? '';
+      const isSignInRequest = url.includes('/auth/login');
+      const isRefreshRequest = url.includes('/auth/refresh');
+
+      // 401 Unauthorized 이고 로그인/리프레시 요청이 아니며 아직 재시도하지 않은 경우
+      if (
+        error.response?.status === 401 &&
+        !isSignInRequest &&
+        !isRefreshRequest &&
+        !(originalRequest as any)._retry
+      ) {
+        (originalRequest as any)._retry = true;
+
+        const refreshToken = tokenStore.getRefreshToken();
+        if (refreshToken) {
+          try {
+            // apiClient를 사용해 리프레시 엔드포인트 호출
+            // 1) dynamic baseURL (Remote Config) 자동 반영
+            // 2) MockAdapter 연동 지원
+            // 3) 응답에 대한 camelCase 키 변환 자동 처리
+            const response = await apiClient.post<{
+              accessToken: string;
+              refreshToken: string;
+            }>('/api/v1/auth/refresh', {
+              refresh_token: refreshToken,
+            });
+
+            const {
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+            } = response.data;
+
+            // 새 토큰 세팅
+            tokenStore.set(newAccessToken, newRefreshToken);
+
+            // 기존 요청 재실행
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return apiClient(originalRequest);
+          } catch (refreshError) {
+            // 리프레시 실패 시 강제 로그아웃
+            useAuthStore.getState().forceLogout();
+            return Promise.reject(refreshError);
+          }
+        } else {
+          // 리프레시 토큰이 없으면 강제 로그아웃
+          useAuthStore.getState().forceLogout();
+        }
+      }
+
       return Promise.reject(error);
     },
   );

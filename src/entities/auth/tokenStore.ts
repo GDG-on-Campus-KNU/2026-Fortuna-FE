@@ -10,6 +10,7 @@ import { storage } from '@/src/services/storage';
 // clearAll은 contents/preferences 캐시까지 지우므로 여기서 쓰지 않는다.
 const KEY = {
   accessToken: 'auth:accessToken',
+  refreshToken: 'auth:refreshToken',
 } as const;
 
 export const tokenStore = {
@@ -17,10 +18,16 @@ export const tokenStore = {
     const value = storage.getString(KEY.accessToken);
     return value ? value : null;
   },
-  set(token: string): void {
-    storage.set(KEY.accessToken, token);
+  getRefreshToken(): string | null {
+    const value = storage.getString(KEY.refreshToken);
+    return value ? value : null;
+  },
+  set(accessToken: string, refreshToken: string): void {
+    storage.set(KEY.accessToken, accessToken);
+    storage.set(KEY.refreshToken, refreshToken);
   },
   clear(): void {
     storage.set(KEY.accessToken, '');
+    storage.set(KEY.refreshToken, '');
   },
 };
