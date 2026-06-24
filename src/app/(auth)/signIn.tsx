@@ -1,5 +1,5 @@
 import SignInScreen from '@/src/screens/SignInScreen';
 
-export default function LoginScreen() {
+export default function SignInRouteScreen() {
   return <SignInScreen />;
 }

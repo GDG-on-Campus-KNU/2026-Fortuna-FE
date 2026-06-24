@@ -1,18 +1,18 @@
 import { apiClient } from '@/src/services/api/client';
 import type { AuthTokens, Credentials, User } from './model';
 
-// 함정 1: auth 라우터만 `/api/v1` 프리픽스를 쓴다 (contents/jobs/uploads는 루트).
+// 모든 API 라우터가 `/api/v1` 프리픽스를 쓴다.
 const AUTH = '/api/v1/auth';
 
 export const authApi = {
-  // signup은 일반 JSON. password 8~100자는 BE에서 검증한다.
-  signup: (credentials: Credentials) =>
+  // signUp은 일반 JSON. password 8~100자는 BE에서 검증한다.
+  signUp: (credentials: Credentials) =>
     apiClient.post<User>(`${AUTH}/signup`, credentials).then((r) => r.data),
 
-  // 함정 2: login은 OAuth2PasswordRequestForm.
+  // 함정 2: signIn은 OAuth2PasswordRequestForm.
   // - Content-Type: application/x-www-form-urlencoded
   // - 이메일을 `email`이 아니라 `username` 필드에 담는다.
-  login: (credentials: Credentials) => {
+  signIn: (credentials: Credentials) => {
     const body =
       `username=${encodeURIComponent(credentials.email)}` +
       `&password=${encodeURIComponent(credentials.password)}`;

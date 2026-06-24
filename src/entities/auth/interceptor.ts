@@ -27,8 +27,8 @@ export function installAuthInterceptor(): void {
     (response) => response,
     (error: AxiosError) => {
       const url = error.config?.url ?? '';
-      const isLoginRequest = url.includes('/auth/login');
-      if (error.response?.status === 401 && !isLoginRequest) {
+      const isSignInRequest = url.includes('/auth/login');
+      if (error.response?.status === 401 && !isSignInRequest) {
         useAuthStore.getState().forceLogout();
       }
       return Promise.reject(error);

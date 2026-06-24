@@ -3,14 +3,10 @@ import { jobsApi } from './api';
 import type { Job } from './model';
 
 // 폴링 정책
-// - 처음 10초: 1초 간격
-// - 이후: 3초 간격
-// - 60초 경과 시 중단
+// - 10초 간격으로 최대 5분(300초) 동안 확인
 // - status가 'done' | 'failed' 가 되면 즉시 중단
-const FAST_INTERVAL_MS = 1_000;
-const SLOW_INTERVAL_MS = 3_000;
-const FAST_PHASE_LIMIT = 10; // tick 횟수 기준
-const MAX_DURATION_MS = 60_000;
+const POLL_INTERVAL_MS = 10_000; // 10초
+const MAX_DURATION_MS = 300_000; // 5분
 
 interface UseJobPollingResult {
   job: Job | null;
@@ -53,10 +49,7 @@ export function useJobPolling(jobId: string | null): UseJobPollingResult {
         return;
       }
 
-      attempt += 1;
-      const delay =
-        attempt < FAST_PHASE_LIMIT ? FAST_INTERVAL_MS : SLOW_INTERVAL_MS;
-      timer = setTimeout(tick, delay);
+      timer = setTimeout(tick, POLL_INTERVAL_MS);
     };
 
     tick();

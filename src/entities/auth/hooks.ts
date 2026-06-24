@@ -21,15 +21,15 @@ export function useAuth(): UseAuthResult {
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX = 100;
 
-type Mode = 'login' | 'signup';
+type Mode = 'signIn' | 'signUp';
 
 function messageFor(mode: Mode, error: unknown): string {
   if (isAxiosError(error)) {
     const code = error.response?.status;
-    if (mode === 'login' && code === 401) {
+    if (mode === 'signIn' && code === 401) {
       return '이메일 또는 비밀번호가 올바르지 않습니다.';
     }
-    if (mode === 'signup' && (code === 400 || code === 409)) {
+    if (mode === 'signUp' && (code === 400 || code === 409)) {
       return '이미 가입된 이메일입니다.';
     }
     if (code === undefined) {
@@ -71,10 +71,10 @@ export function useAuthForm(mode: Mode): UseAuthFormResult {
       setError(null);
       try {
         const credentials: Credentials = { email: trimmedEmail, password };
-        if (mode === 'login') {
-          await authRepository.login(credentials);
+        if (mode === 'signIn') {
+          await authRepository.signIn(credentials);
         } else {
-          await authRepository.signup(credentials);
+          await authRepository.signUp(credentials);
         }
       } catch (e) {
         setError(messageFor(mode, e));

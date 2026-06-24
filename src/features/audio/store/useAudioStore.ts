@@ -1,10 +1,9 @@
 import {
-  Audio,
-  InterruptionModeAndroid,
-  InterruptionModeIOS,
-  PitchCorrectionQuality,
-  type AVPlaybackStatus,
-} from 'expo-av';
+  createAudioPlayer,
+  setAudioModeAsync,
+  type AudioPlayer,
+  type AudioStatus,
+} from 'expo-audio';
 import { create } from 'zustand';
 
 export type AudioPlaybackState =
@@ -41,7 +40,7 @@ type AudioStore = {
   rate: number;
 
   // Actions
-  init: (track: AudioTrack) => Promise<void>;
+  init: (track: AudioTrack) => Promise<boolean>;
   unload: () => Promise<void>;
   togglePlayback: () => Promise<void>;
   stop: () => Promise<void>;
@@ -51,29 +50,49 @@ type AudioStore = {
   setBusy: (isBusy: boolean) => void;
 };
 
-let soundInstance: Audio.Sound | undefined;
-let setupPromise: Promise<Audio.Sound> | undefined;
+let soundInstance: AudioPlayer | undefined;
+let setupPromise: Promise<AudioPlayer> | undefined;
+let statusListenerSubscription: { remove: () => void } | undefined;
+let initRequestId = 0;
 
-const handlePlaybackStatusUpdate = (status: AVPlaybackStatus, set: any) => {
+const disposeCurrentPlayer = () => {
+  const currentSound = soundInstance;
+  soundInstance = undefined;
+  setupPromise = undefined;
+
+  if (statusListenerSubscription) {
+    statusListenerSubscription.remove();
+    statusListenerSubscription = undefined;
+  }
+
+  currentSound?.pause();
+  currentSound?.remove();
+};
+
+const handlePlaybackStatusUpdate = (status: AudioStatus, set: any) => {
   if (!status.isLoaded) {
-    if (status.error) {
-      set({ error: status.error, playbackState: 'error' });
+    if (status.playbackState === 'error') {
+      console.warn('[useAudioStore] AudioPlayer error:', status);
+      set({
+        error: '오디오를 로드할 수 없습니다.',
+        playbackState: 'error',
+      });
     }
     return;
   }
 
   set({
     error: undefined,
-    durationMillis: status.durationMillis ?? 0,
+    durationMillis: (status.duration ?? 0) * 1000,
     playbackState: status.didJustFinish
       ? 'ended'
-      : status.isPlaying
+      : status.playing
         ? 'playing'
         : status.isBuffering
           ? 'loading'
           : 'paused',
-    positionMillis: status.positionMillis,
-    rate: status.rate,
+    positionMillis: (status.currentTime ?? 0) * 1000,
+    rate: status.playbackRate,
   });
 };
 
@@ -88,49 +107,77 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
   setBusy: (isBusy) => set({ isBusy }),
 
   init: async (track) => {
+    const requestId = ++initRequestId;
+
     // If already playing the same track, just return
-    if (soundInstance && get().activeTrack?.id === track.id) return;
+    if (soundInstance && get().activeTrack?.id === track.id) return true;
+
+    if (setupPromise) {
+      try {
+        await setupPromise;
+      } catch {
+        // The active request below will surface its own error state.
+      }
+    }
+
+    if (requestId !== initRequestId) {
+      return false;
+    }
 
     // If playing a different track, unload first
     if (soundInstance) {
       await get().unload();
     }
 
-    if (setupPromise) {
-      await setupPromise;
-      return;
-    }
-
     set({ isBusy: true, playbackState: 'loading' });
 
     setupPromise = (async () => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-          playThroughEarpieceAndroid: false,
-          playsInSilentModeIOS: true,
-          shouldDuckAndroid: false,
-          staysActiveInBackground: true,
+        await setAudioModeAsync({
+          allowsRecording: false,
+          interruptionMode: 'doNotMix',
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          shouldRouteThroughEarpiece: false,
         });
 
-        const { sound, status } = await Audio.Sound.createAsync(
-          { uri: track.url },
-          {
-            progressUpdateIntervalMillis: 500,
-            rate: get().rate,
-            shouldCorrectPitch: true,
-            shouldPlay: false,
+        const player = createAudioPlayer(track.url, {
+          updateInterval: 500,
+        });
+
+        if (requestId !== initRequestId) {
+          player.pause();
+          player.remove();
+          return player;
+        }
+
+        // Set playback configurations
+        player.setPlaybackRate(get().rate, 'medium');
+
+        statusListenerSubscription = player.addListener(
+          'playbackStatusUpdate',
+          (status) => {
+            handlePlaybackStatusUpdate(status, set);
           },
-          (status) => handlePlaybackStatusUpdate(status, set),
         );
 
-        soundInstance = sound;
+        soundInstance = player;
         set({ activeTrack: track, isReady: true });
-        handlePlaybackStatusUpdate(status, set);
 
-        return sound;
+        // Update the initial state
+        set({
+          error: undefined,
+          durationMillis: (player.duration ?? 0) * 1000,
+          playbackState: player.playing
+            ? 'playing'
+            : player.isBuffering
+              ? 'loading'
+              : 'paused',
+          positionMillis: (player.currentTime ?? 0) * 1000,
+          rate: player.playbackRate,
+        });
+
+        return player;
       } catch (error) {
         setupPromise = undefined;
         const errorMessage =
@@ -146,63 +193,52 @@ export const useAudioStore = create<AudioStore>((set, get) => ({
     })();
 
     await setupPromise;
+    return requestId === initRequestId;
   },
 
   unload: async () => {
     if (!soundInstance) return;
 
-    const currentSound = soundInstance;
-    soundInstance = undefined;
-    setupPromise = undefined;
-    currentSound.setOnPlaybackStatusUpdate(null);
-    await currentSound.unloadAsync();
-
+    disposeCurrentPlayer();
     set({ isReady: false, playbackState: 'idle', activeTrack: undefined });
   },
 
   togglePlayback: async () => {
     if (!soundInstance) return;
 
-    const status = await soundInstance.getStatusAsync();
-    if (status.isLoaded && status.isPlaying) {
-      await soundInstance.pauseAsync();
+    if (soundInstance.playing) {
+      soundInstance.pause();
     } else {
-      await soundInstance.playAsync();
+      soundInstance.play();
     }
   },
 
   stop: async () => {
     if (!soundInstance) return;
-    await soundInstance.stopAsync();
-    await soundInstance.setPositionAsync(0);
+    soundInstance.pause();
+    await soundInstance.seekTo(0);
   },
 
   seek: async (positionSeconds) => {
     if (!soundInstance) return;
-    const positionMillis = Math.max(positionSeconds, 0) * 1000;
-    await soundInstance.setPositionAsync(positionMillis);
+    await soundInstance.seekTo(positionSeconds);
   },
 
   jump: async (offsetSeconds) => {
     if (!soundInstance) return;
-    const status = await soundInstance.getStatusAsync();
-    if (!status.isLoaded) return;
 
-    const durationMillis = status.durationMillis ?? 0;
-    const nextPositionMillis = Math.min(
-      Math.max(status.positionMillis + offsetSeconds * 1000, 0),
-      durationMillis,
+    const currentPosition = soundInstance.currentTime ?? 0;
+    const duration = soundInstance.duration ?? 0;
+    const nextPosition = Math.min(
+      Math.max(currentPosition + offsetSeconds, 0),
+      duration,
     );
-    await soundInstance.setPositionAsync(nextPositionMillis);
+    await soundInstance.seekTo(nextPosition);
   },
 
   setRate: async (rate) => {
     if (soundInstance) {
-      await soundInstance.setRateAsync(
-        rate,
-        true,
-        PitchCorrectionQuality.Medium,
-      );
+      soundInstance.setPlaybackRate(rate, 'medium');
     }
     set({ rate });
   },
